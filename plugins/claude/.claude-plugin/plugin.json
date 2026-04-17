@@ -1,0 +1,6 @@
+{
+  "name": "claude",
+  "version": "1.0.0",
+  "description": "Delegate tasks and code reviews to a second Claude Code instance.",
+  "author": { "name": "valpere" }
+}
