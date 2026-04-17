@@ -155,6 +155,36 @@ chorus/
 └── README.md
 ```
 
+## Known Limitations
+
+### Codex sandbox restricts file access
+
+Codex runs inside a bubblewrap sandbox that limits filesystem access to the
+current working directory. When you delegate a task to Codex from another agent,
+Codex can only read files **within the directory where it was launched** — not
+arbitrary paths on the system.
+
+**Practical impact:** If you invoke `/codex:run` or `chorus-codex` from a
+project outside Codex's working directory (e.g. running Claude Code in
+`~/wrk/projectA` but Codex is launched in `~/wrk/common`), Codex will produce
+metadata-only output (file sizes, directory structure) instead of content-based
+analysis.
+
+**Workaround:** Run Codex from the same project root as the other agents, or
+use `codex --no-sandbox` if your environment supports it.
+
+### OpenCode stdout is not capturable
+
+`opencode run` is a TUI application — it writes ANSI output to the terminal but
+does not expose stdout for programmatic capture. Chorus uses `claude --print` as
+a proxy when a third council voice is needed from within Claude Code.
+
+**Practical impact:** The `delegate_claude` MCP tool in the OpenCode plugin
+works correctly. The reverse path (using OpenCode as a council member from
+Claude Code) requires the TUI to be visible.
+
+---
+
 ## License
 
 MIT
