@@ -1,0 +1,24 @@
+{
+  "name": "@valpere/chorus-opencode",
+  "version": "1.0.0",
+  "description": "OpenCode plugin: delegate tasks to Claude, Gemini, and Codex",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": "./src/index.js",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "keywords": [
+    "opencode",
+    "mcp",
+    "plugin",
+    "claude",
+    "gemini",
+    "codex"
+  ],
+  "author": "valpere",
+  "license": "MIT"
+}
