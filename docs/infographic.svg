@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="900" height="530" viewBox="0 0 900 530" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 8" refX="9" refY="4"
+            markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#4B5563"/>
+    </marker>
+    <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-blue" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="530" fill="#0D1117" rx="14"/>
+
+  <!-- Subtle grid dots -->
+  <pattern id="dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+    <circle cx="1" cy="1" r="1" fill="#21262D"/>
+  </pattern>
+  <rect width="900" height="530" fill="url(#dots)" rx="14" opacity="0.6"/>
+
+  <!-- Title -->
+  <text x="450" y="52" text-anchor="middle"
+        font-family="'SF Mono','Fira Code','Cascadia Code',monospace"
+        font-size="36" font-weight="700" fill="#E6EDF3" letter-spacing="10">chorus</text>
+  <text x="450" y="77" text-anchor="middle"
+        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+        font-size="13" fill="#8B949E" letter-spacing="0.5">
+    Cross-agent delegation mesh for AI coding CLIs
+  </text>
+
+  <!-- ── CONNECTIONS (drawn before nodes) ── -->
+
+  <!-- Claude ↔ OpenCode -->
+  <line x1="378" y1="182" x2="232" y2="274"
+        stroke="#4B5563" stroke-width="1.5"
+        marker-start="url(#arr)" marker-end="url(#arr)"/>
+
+  <!-- Claude ↔ Gemini CLI -->
+  <line x1="522" y1="182" x2="668" y2="274"
+        stroke="#4B5563" stroke-width="1.5"
+        marker-start="url(#arr)" marker-end="url(#arr)"/>
+
+  <!-- Claude ↔ Codex (dashed diagonal, passes through center) -->
+  <line x1="450" y1="183" x2="450" y2="413"
+        stroke="#4B5563" stroke-width="1.5" stroke-dasharray="5 4"
+        marker-start="url(#arr)" marker-end="url(#arr)"/>
+
+  <!-- OpenCode ↔ Gemini CLI -->
+  <line x1="253" y1="303" x2="647" y2="303"
+        stroke="#4B5563" stroke-width="1.5"
+        marker-start="url(#arr)" marker-end="url(#arr)"/>
+
+  <!-- OpenCode ↔ Codex -->
+  <line x1="222" y1="332" x2="382" y2="413"
+        stroke="#4B5563" stroke-width="1.5"
+        marker-start="url(#arr)" marker-end="url(#arr)"/>
+
+  <!-- Gemini CLI ↔ Codex -->
+  <line x1="678" y1="332" x2="518" y2="413"
+        stroke="#4B5563" stroke-width="1.5"
+        marker-start="url(#arr)" marker-end="url(#arr)"/>
+
+  <!-- ── NODES ── -->
+
+  <!-- Claude Code — top center  (rect 355,123 190×60) -->
+  <rect x="355" y="123" width="190" height="60" rx="9"
+        fill="#161B22" stroke="#D4793A" stroke-width="2"/>
+  <text x="450" y="149" text-anchor="middle"
+        font-family="-apple-system,sans-serif" font-size="15" font-weight="600" fill="#D4793A">
+    Claude Code
+  </text>
+  <text x="450" y="170" text-anchor="middle"
+        font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6B737D">
+    /gemini  /opencode  /codex
+  </text>
+
+  <!-- OpenCode — left middle  (rect 53,273 200×60) -->
+  <rect x="53" y="273" width="200" height="60" rx="9"
+        fill="#161B22" stroke="#0EA5E9" stroke-width="2"/>
+  <text x="153" y="299" text-anchor="middle"
+        font-family="-apple-system,sans-serif" font-size="15" font-weight="600" fill="#0EA5E9">
+    OpenCode
+  </text>
+  <text x="153" y="320" text-anchor="middle"
+        font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6B737D">
+    MCP tools (npm)
+  </text>
+
+  <!-- Gemini CLI — right middle  (rect 647,273 200×60) -->
+  <rect x="647" y="273" width="200" height="60" rx="9"
+        fill="#161B22" stroke="#22C55E" stroke-width="2"/>
+  <text x="747" y="299" text-anchor="middle"
+        font-family="-apple-system,sans-serif" font-size="15" font-weight="600" fill="#22C55E">
+    Gemini CLI
+  </text>
+  <text x="747" y="320" text-anchor="middle"
+        font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6B737D">
+    SKILL.md (git)
+  </text>
+
+  <!-- Codex — bottom center  (rect 355,413 190×60) -->
+  <rect x="355" y="413" width="190" height="60" rx="9"
+        fill="#161B22" stroke="#A855F7" stroke-width="2"/>
+  <text x="450" y="439" text-anchor="middle"
+        font-family="-apple-system,sans-serif" font-size="15" font-weight="600" fill="#A855F7">
+    Codex
+  </text>
+  <text x="450" y="460" text-anchor="middle"
+        font-family="'SF Mono','Fira Code',monospace" font-size="10" fill="#6B737D">
+    SKILL.md (local)
+  </text>
+
+  <!-- ── FOOTER ── -->
+  <text x="450" y="508" text-anchor="middle"
+        font-family="-apple-system,sans-serif" font-size="11" fill="#3D444D">
+    12 delegation paths · install once, delegate everywhere
+  </text>
+
+  <!-- bottom badge row -->
+  <rect x="262" y="518" width="14" height="4" rx="2" fill="#D4793A"/>
+  <rect x="280" y="518" width="14" height="4" rx="2" fill="#0EA5E9"/>
+  <rect x="298" y="518" width="14" height="4" rx="2" fill="#22C55E"/>
+  <rect x="316" y="518" width="14" height="4" rx="2" fill="#A855F7"/>
+  <rect x="334" y="518" width="220" height="4" rx="2" fill="#21262D"/>
+</svg>

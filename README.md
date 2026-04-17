@@ -2,6 +2,8 @@
 
 Cross-agent plugin collection for AI coding CLIs. Delegate tasks between Claude Code, OpenCode, Gemini CLI, and Codex.
 
+![chorus delegation mesh](docs/infographic.png)
+
 ## Overview
 
 Chorus enables four AI coding agents to delegate tasks to each other, creating a mesh of cross-agent capabilities. Get multiple perspectives on your code or run parallel tasks using different AI agents.
