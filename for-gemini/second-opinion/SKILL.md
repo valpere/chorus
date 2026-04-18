@@ -23,14 +23,18 @@ metadata:
 
 | Agent | Best for |
 |-------|----------|
-| Claude (default) | Depth — edge cases, correctness, security implications |
+| Gemini (default) | Fast, good long-context scan, edge-case framing |
+| Claude | Depth — correctness, security implications |
 | Codex | Brevity — "is this over-engineered?" check |
 | (you) | Already being asked — delegate to another agent |
 
 ## Invocation
 
 ```bash
-# Default: ask Claude
+# Default: ask Gemini
+gemini --prompt "Give a concise second opinion on the following decision or approach. Be direct: state what you agree with, what concerns you, and your overall verdict (approve / approve-with-caveats / reject).\n\n<approach>" --yolo --output-format text
+
+# Or ask Claude
 claude --print "Give a concise second opinion on the following decision or approach. Be direct: state what you agree with, what concerns you, and your overall verdict (approve / approve-with-caveats / reject).\n\n<approach>" --dangerously-skip-permissions
 
 # Or ask Codex

@@ -278,6 +278,10 @@ async function runCouncil(task) {
 
 async function runParallelReview() {
   const gitResult = spawnSync('git', ['diff', 'HEAD'], { encoding: 'utf8' });
+  if (gitResult.error || gitResult.status !== 0) {
+    const msg = gitResult.stderr?.trim() || gitResult.error?.message || `exit ${gitResult.status}`;
+    throw new Error(`Failed to get git diff: ${msg}`);
+  }
   const diff = gitResult.stdout?.trim() || 'No uncommitted changes found.';
   return runParallel([
     {
@@ -355,25 +359,29 @@ server.setRequestHandler('tools/call', async (request) => {
 
   let results;
 
+  function requireString(value, name) {
+    if (typeof value !== 'string') throw new Error(`Missing required parameter: ${name}`);
+    const trimmed = value.trim();
+    if (!trimmed) throw new Error(`Parameter ${name} must be a non-empty string`);
+    return trimmed;
+  }
+
   switch (name) {
     case 'delegate_claude': {
-      if (!args.task) throw new Error('Missing required parameter: task');
-      results = [{ name: 'claude', output: (await delegateToClaude(args.task.trim())).trim() }];
-      break;
+      const task = requireString(args.task, 'task');
+      return { content: [{ type: 'text', text: (await delegateToClaude(task)).trim() }] };
     }
     case 'delegate_gemini': {
-      if (!args.task) throw new Error('Missing required parameter: task');
-      results = [{ name: 'gemini', output: (await delegateToGemini(args.task.trim())).trim() }];
-      break;
+      const task = requireString(args.task, 'task');
+      return { content: [{ type: 'text', text: (await delegateToGemini(task)).trim() }] };
     }
     case 'delegate_codex': {
-      if (!args.task) throw new Error('Missing required parameter: task');
-      results = [{ name: 'codex', output: (await delegateToCodex(args.task.trim())).trim() }];
-      break;
+      const task = requireString(args.task, 'task');
+      return { content: [{ type: 'text', text: (await delegateToCodex(task)).trim() }] };
     }
     case 'council': {
-      if (!args.task) throw new Error('Missing required parameter: task');
-      results = await runCouncil(args.task.trim());
+      const task = requireString(args.task, 'task');
+      results = await runCouncil(task);
       break;
     }
     case 'parallel_review': {
@@ -381,13 +389,16 @@ server.setRequestHandler('tools/call', async (request) => {
       break;
     }
     case 'parallel_debug': {
-      if (!args.symptom) throw new Error('Missing required parameter: symptom');
-      results = await runParallelDebug(args.symptom.trim());
+      const symptom = requireString(args.symptom, 'symptom');
+      results = await runParallelDebug(symptom);
       break;
     }
     case 'second_opinion': {
-      if (!args.approach) throw new Error('Missing required parameter: approach');
-      results = await runSecondOpinion(args.approach.trim(), args.agent ?? 'gemini');
+      const approach = requireString(args.approach, 'approach');
+      const supportedAgents = new Set(['claude', 'gemini', 'codex']);
+      const agent = args.agent ?? 'gemini';
+      if (!supportedAgents.has(agent)) throw new Error(`Invalid agent: ${agent}. Choose from: claude, gemini, codex`);
+      results = await runSecondOpinion(approach, agent);
       break;
     }
     default:

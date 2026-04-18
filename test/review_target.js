@@ -1,3 +1,7 @@
+// INTENTIONALLY VULNERABLE DEMO FILE — do not use in production.
+// Used as a review target for /chorus:review smoke tests.
+// Intentional flaws: off-by-one hash, no input validation, predictable token, RCE via eval.
+
 // User authentication and rate limiting service
 
 const users = {};

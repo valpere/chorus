@@ -22,7 +22,7 @@ Raw slash-command arguments:
 - Strip `--background` and `--wait` before passing to companion.
 
 **Pre-flight:**
-Check only the selected agent's CLI:
+Check all supported agent CLIs:
 ```bash
 node "$CLAUDE_PLUGIN_ROOT/scripts/companion.mjs" check-all
 ```

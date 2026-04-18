@@ -10,7 +10,16 @@ function checkCli(binary) {
 }
 
 function stripFlags(args) {
-  return args.filter(a => a !== '--background' && a !== '--wait' && !a.startsWith('--agent'));
+  const result = [];
+  let skipNext = false;
+  for (const a of args) {
+    if (skipNext) { skipNext = false; continue; }
+    if (a === '--background' || a === '--wait') continue;
+    if (a === '--agent') { skipNext = true; continue; }
+    if (a.startsWith('--agent=')) continue;
+    result.push(a);
+  }
+  return result;
 }
 
 function runAgent(name, binary, args) {
@@ -111,6 +120,11 @@ if (cmd === 'council') {
 
 if (cmd === 'review') {
   const gitResult = spawnSync('git', ['diff', 'HEAD'], { encoding: 'utf8' });
+  if (gitResult.error || gitResult.status !== 0) {
+    const msg = gitResult.stderr?.trim() || gitResult.error?.message || `exit ${gitResult.status}`;
+    console.error(`Failed to get git diff: ${msg}`);
+    process.exit(1);
+  }
   const diff = gitResult.stdout?.trim() || 'No uncommitted changes found.';
 
   const agents = [
@@ -189,12 +203,13 @@ if (cmd === 'debug') {
 // ── second-opinion ───────────────────────────────────────────────────────────
 
 if (cmd === 'second-opinion') {
-  const agentFlag = rest.find(a => a.startsWith('--agent='))?.split('=')[1]
-    ?? (rest[rest.indexOf('--agent') + 1] !== undefined && !rest[rest.indexOf('--agent') + 1].startsWith('--')
-        ? rest[rest.indexOf('--agent') + 1]
-        : 'gemini');
+  const agentEqualsFlag = rest.find(a => a.startsWith('--agent='))?.split('=')[1];
+  const agentIndex = rest.indexOf('--agent');
+  const agentNextValue = agentIndex !== -1 && rest[agentIndex + 1] && !rest[agentIndex + 1].startsWith('--')
+    ? rest[agentIndex + 1] : undefined;
+  const agentFlag = agentEqualsFlag ?? agentNextValue ?? 'gemini';
 
-  const task = stripFlags(rest).filter(a => a !== '--agent').join(' ').trim();
+  const task = stripFlags(rest).join(' ').trim();
   if (!task) { console.error('Usage: companion.mjs second-opinion [--agent claude|gemini|codex] <decision or approach>'); process.exit(1); }
 
   const prompt = `Give a concise second opinion on the following decision or approach.\n` +
@@ -221,7 +236,9 @@ if (cmd === 'second-opinion') {
   console.log(`\n${'═'.repeat(60)}`);
 }
 
-if (!cmd) {
+const known = ['check-all', 'council', 'review', 'debug', 'second-opinion'];
+if (!cmd || !known.includes(cmd)) {
+  if (cmd) console.error(`Unknown command: ${cmd}`);
   console.error('Usage: companion.mjs <check-all|council|review|debug|second-opinion> [args...]');
   process.exit(1);
 }
