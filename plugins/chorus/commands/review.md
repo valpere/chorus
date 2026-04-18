@@ -1,0 +1,63 @@
+---
+description: Parallel code review from all three agents on the current git diff
+argument-hint: "[--wait|--background]"
+disable-model-invocation: true
+allowed-tools: Bash(node:*), Bash(git:*)
+---
+
+Run a parallel code review across three agents and synthesize the findings.
+
+Raw slash-command arguments:
+`$ARGUMENTS`
+
+**Review focus per agent:**
+- Claude — correctness and security (bugs, vulnerabilities, unsafe patterns)
+- Gemini — edge cases and robustness (missing error handling, race conditions)
+- Codex — scope and simplicity (unnecessary complexity, simpler alternatives)
+
+Each agent reviews the current `git diff HEAD`.
+
+**Execution mode:**
+- Default: background (reviews are slow).
+- If `--wait` is in the arguments, run in foreground.
+- Strip `--background` and `--wait` before passing to companion.
+
+**Pre-flight:**
+```bash
+node "$CLAUDE_PLUGIN_ROOT/scripts/companion.mjs" check-all
+```
+If non-zero, stop and tell the user which agents are missing.
+
+**Foreground execution:**
+```bash
+node "$CLAUDE_PLUGIN_ROOT/scripts/companion.mjs" review $ARGUMENTS
+```
+
+**Background execution:**
+```typescript
+Bash({
+  command: `node "$CLAUDE_PLUGIN_ROOT/scripts/companion.mjs" review $ARGUMENTS`,
+  description: "Parallel code review",
+  run_in_background: true
+})
+```
+
+**After the companion exits, synthesize:**
+
+```
+## Parallel Review Summary
+
+**Critical findings** (flagged by 2+ agents):
+- …
+
+**Individual findings:**
+| Finding | Claude | Gemini | Codex |
+|---------|--------|--------|-------|
+| …       | ✓      |        | ✓     |
+
+## Verdict
+
+<1–2 sentences: overall code health and whether changes should proceed as-is or need revision.>
+```
+
+This is a review-only command — do not fix issues or apply patches.
