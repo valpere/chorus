@@ -29,6 +29,12 @@ Adds slash commands:
 - `/codex:run`, `/codex:review`
 - `/claude:run`, `/claude:review` (second Claude instance)
 
+**Workflow patterns** (orchestrate multiple agents at once):
+- `/chorus:council` — LLM council: all three agents, different roles, you synthesize
+- `/chorus:review` — parallel code review from all three agents
+- `/chorus:debug` — parallel root-cause hypotheses for a bug symptom
+- `/chorus:second-opinion` — quick independent check from one agent
+
 ### OpenCode
 
 ```bash
@@ -39,34 +45,63 @@ Adds MCP tools:
 - `delegate_claude(task: string) → string`
 - `delegate_gemini(task: string) → string`
 - `delegate_codex(task: string) → string`
+- `council(task: string) → string` — parallel council, all three agents
+- `parallel_review() → string` — parallel review of current git diff
+- `parallel_debug(symptom: string) → string` — parallel root-cause hypotheses
+- `second_opinion(approach: string, agent?: string) → string`
 
 ### Gemini CLI
 
 ```bash
+# Delegation skills
 gemini skills install https://github.com/valpere/chorus --path for-gemini/claude
 gemini skills install https://github.com/valpere/chorus --path for-gemini/opencode
 gemini skills install https://github.com/valpere/chorus --path for-gemini/codex
+
+# Workflow pattern skills
+gemini skills install https://github.com/valpere/chorus --path for-gemini/council
+gemini skills install https://github.com/valpere/chorus --path for-gemini/parallel-review
+gemini skills install https://github.com/valpere/chorus --path for-gemini/parallel-debug
+gemini skills install https://github.com/valpere/chorus --path for-gemini/second-opinion
 ```
 
 Adds skills:
 - `chorus-claude` - Delegate to Claude Code
 - `chorus-opencode` - Delegate to OpenCode
 - `chorus-codex` - Delegate to Codex
+- `chorus-council` - LLM council with all three agents
+- `chorus-parallel-review` - Parallel code review
+- `chorus-parallel-debug` - Parallel root-cause hypotheses
+- `chorus-second-opinion` - Quick independent second opinion
 
 ### Codex
 
 ```bash
 git clone https://github.com/valpere/chorus /tmp/chorus
+
+# Delegation skills
 mkdir -p ~/.codex/skills/chorus-claude ~/.codex/skills/chorus-opencode ~/.codex/skills/chorus-gemini
 cp /tmp/chorus/for-codex/claude/SKILL.md ~/.codex/skills/chorus-claude/
 cp /tmp/chorus/for-codex/opencode/SKILL.md ~/.codex/skills/chorus-opencode/
 cp /tmp/chorus/for-codex/gemini/SKILL.md ~/.codex/skills/chorus-gemini/
+
+# Workflow pattern skills
+mkdir -p ~/.codex/skills/chorus-council ~/.codex/skills/chorus-parallel-review \
+         ~/.codex/skills/chorus-parallel-debug ~/.codex/skills/chorus-second-opinion
+cp /tmp/chorus/for-codex/council/SKILL.md ~/.codex/skills/chorus-council/
+cp /tmp/chorus/for-codex/parallel-review/SKILL.md ~/.codex/skills/chorus-parallel-review/
+cp /tmp/chorus/for-codex/parallel-debug/SKILL.md ~/.codex/skills/chorus-parallel-debug/
+cp /tmp/chorus/for-codex/second-opinion/SKILL.md ~/.codex/skills/chorus-second-opinion/
 ```
 
 Adds skills:
 - `chorus-claude` - Delegate to Claude Code
 - `chorus-opencode` - Delegate to OpenCode
 - `chorus-gemini` - Delegate to Gemini CLI
+- `chorus-council` - LLM council with all three agents
+- `chorus-parallel-review` - Parallel code review
+- `chorus-parallel-debug` - Parallel root-cause hypotheses
+- `chorus-second-opinion` - Quick independent second opinion
 
 ## Usage Examples
 
@@ -115,6 +150,48 @@ Once skills are installed, Codex will activate them when you mention delegating:
 codex "Ask Gemini to analyze this file for performance issues"
 ```
 
+## Workflow Patterns
+
+Workflow patterns orchestrate **multiple agents in parallel** and synthesize the results. Install the `chorus` plugin once to access all four.
+
+### LLM Council
+
+Three agents tackle the same task with different roles; the host synthesizes as chairman.
+
+```bash
+/chorus:council "Should we use optimistic locking or a distributed lock for this feature?"
+/chorus:council --background "Review the architecture of the new auth service"
+```
+
+### Parallel Review
+
+All three agents review the current `git diff HEAD` simultaneously, each with a different focus (correctness, edge cases, scope).
+
+```bash
+/chorus:review --wait
+/chorus:review --background
+```
+
+### Parallel Debug
+
+All three agents propose root-cause hypotheses for a symptom; the host synthesizes an investigation plan.
+
+```bash
+/chorus:debug "Checkout fails intermittently with a 500 — only in production, never in staging"
+```
+
+### Second Opinion
+
+Quick independent check from one agent. Default: Gemini. Override with `--agent`.
+
+```bash
+/chorus:second-opinion "Use a ULID instead of UUID for the new events table primary key"
+/chorus:second-opinion --agent claude "Cache the auth token in localStorage vs sessionStorage"
+/chorus:second-opinion --agent codex "Extract this 30-line block into a shared utility"
+```
+
+---
+
 ## Execution Modes
 
 All `run` and `review` commands support two execution modes:
@@ -140,15 +217,24 @@ chorus/
 │   ├── claude/                # Claude Code self-delegation
 │   ├── opencode/              # OpenCode plugin
 │   ├── gemini/                # Gemini CLI plugin
-│   └── codex/                 # Codex plugin
+│   ├── codex/                 # Codex plugin
+│   └── chorus/                # Workflow patterns (council, review, debug, second-opinion)
 ├── for-gemini/                # Gemini CLI skills
 │   ├── claude/SKILL.md
 │   ├── opencode/SKILL.md
-│   └── codex/SKILL.md
+│   ├── codex/SKILL.md
+│   ├── council/SKILL.md
+│   ├── parallel-review/SKILL.md
+│   ├── parallel-debug/SKILL.md
+│   └── second-opinion/SKILL.md
 ├── for-codex/                 # Codex skills
 │   ├── claude/SKILL.md
 │   ├── opencode/SKILL.md
-│   └── gemini/SKILL.md
+│   ├── gemini/SKILL.md
+│   ├── council/SKILL.md
+│   ├── parallel-review/SKILL.md
+│   ├── parallel-debug/SKILL.md
+│   └── second-opinion/SKILL.md
 ├── for-opencode/              # OpenCode MCP package
 │   ├── package.json
 │   └── src/

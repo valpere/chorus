@@ -1,11 +1,6 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { spawnSync, spawn } from 'child_process';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Tool definitions
 const TOOLS = [
@@ -49,6 +44,61 @@ const TOOLS = [
         }
       },
       required: ['task']
+    }
+  },
+  {
+    name: 'council',
+    description: 'Run an LLM council: Claude (correctness), Gemini (edge cases), Codex (scope) each tackle the same task in parallel. Returns delimited output — the host agent synthesizes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: {
+          type: 'string',
+          description: 'The task, question, or decision to put before the council'
+        }
+      },
+      required: ['task']
+    }
+  },
+  {
+    name: 'parallel_review',
+    description: 'Parallel code review of the current git diff: Claude reviews for correctness/security, Gemini for edge cases, Codex for scope/simplicity. Returns delimited output — the host agent synthesizes.',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
+  },
+  {
+    name: 'parallel_debug',
+    description: 'Parallel root-cause hypotheses from three agents for a given symptom. Returns ranked hypotheses per agent — the host synthesizes an investigation plan.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        symptom: {
+          type: 'string',
+          description: 'The bug symptom or unexpected behavior to diagnose'
+        }
+      },
+      required: ['symptom']
+    }
+  },
+  {
+    name: 'second_opinion',
+    description: 'Quick independent second opinion from one agent on a decision or approach. Agent gives a verdict: approve / approve-with-caveats / reject.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        approach: {
+          type: 'string',
+          description: 'The decision or approach to get a second opinion on'
+        },
+        agent: {
+          type: 'string',
+          enum: ['claude', 'gemini', 'codex'],
+          description: 'Which agent to consult. Defaults to gemini.'
+        }
+      },
+      required: ['approach']
     }
   }
 ];
@@ -177,6 +227,114 @@ async function delegateToCodex(task) {
   });
 }
 
+// ── orchestration helpers ─────────────────────────────────────────────────────
+
+function delimit(results) {
+  const sep = '═'.repeat(60);
+  return results
+    .map(r => `${sep}\nAGENT: ${r.name.toUpperCase()}\n${sep}\n${r.output}`)
+    .join('\n\n') + `\n${sep}`;
+}
+
+async function runParallel(tasks) {
+  return Promise.all(tasks.map(async ({ name, fn }) => {
+    try {
+      const output = (await fn()).trim();
+      return { name, output };
+    } catch (e) {
+      return { name, output: `[error: ${e.message}]` };
+    }
+  }));
+}
+
+async function runCouncil(task) {
+  return runParallel([
+    {
+      name: 'claude',
+      fn: () => delegateToClaude(
+        `You are the CORRECTNESS reviewer in an LLM council.\n` +
+        `Focus on: logic errors, type safety, off-by-one bugs, unhandled edge cases, security issues.\n` +
+        `Be concise — bullet points preferred.\n\nTask: ${task}`
+      )
+    },
+    {
+      name: 'gemini',
+      fn: () => delegateToGemini(
+        `You are the EDGE-CASES reviewer in an LLM council.\n` +
+        `Focus on: unusual inputs, failure modes, race conditions, what was not considered, alternative approaches.\n` +
+        `Be concise — bullet points preferred.\n\nTask: ${task}`
+      )
+    },
+    {
+      name: 'codex',
+      fn: () => delegateToCodex(
+        `You are the SCOPE reviewer in an LLM council.\n` +
+        `Focus on: unnecessary complexity, premature abstractions, whether the smallest solution was chosen.\n` +
+        `Be concise — bullet points preferred.\n\nTask: ${task}`
+      )
+    }
+  ]);
+}
+
+async function runParallelReview() {
+  const gitResult = spawnSync('git', ['diff', 'HEAD'], { encoding: 'utf8' });
+  if (gitResult.error || gitResult.status !== 0) {
+    const msg = gitResult.stderr?.trim() || gitResult.error?.message || `exit ${gitResult.status}`;
+    throw new Error(`Failed to get git diff: ${msg}`);
+  }
+  const diff = gitResult.stdout?.trim() || 'No uncommitted changes found.';
+  return runParallel([
+    {
+      name: 'claude',
+      fn: () => delegateToClaude(
+        `Review these code changes for CORRECTNESS AND SECURITY.\n` +
+        `Focus on: bugs, logic errors, security vulnerabilities, unsafe patterns.\n` +
+        `Be concise — numbered findings.\n\n${diff}`
+      )
+    },
+    {
+      name: 'gemini',
+      fn: () => delegateToGemini(
+        `Review these code changes for EDGE CASES AND ROBUSTNESS.\n` +
+        `Focus on: unhandled inputs, missing error handling, race conditions, what the author missed.\n` +
+        `Be concise — numbered findings.\n\n${diff}`
+      )
+    },
+    {
+      name: 'codex',
+      fn: () => delegateToCodex(
+        `Review these code changes for SCOPE AND SIMPLICITY.\n` +
+        `Focus on: unnecessary complexity, changes that exceed the stated goal, simpler alternatives.\n` +
+        `Be concise — numbered findings.\n\n${diff}`
+      )
+    }
+  ]);
+}
+
+async function runParallelDebug(symptom) {
+  const prompt = (focus) =>
+    `A software bug has been reported. Generate a ranked list of hypotheses for the root cause.\n` +
+    `Focus area: ${focus}.\n` +
+    `Format: numbered list, most likely first, one sentence per hypothesis.\n\nSymptom: ${symptom}`;
+  return runParallel([
+    { name: 'claude', fn: () => delegateToClaude(prompt('application logic, state management, data flow')) },
+    { name: 'gemini', fn: () => delegateToGemini(prompt('infrastructure, concurrency, external dependencies, environment')) },
+    { name: 'codex',  fn: () => delegateToCodex(prompt('edge cases in input handling, type coercion, off-by-one errors')) }
+  ]);
+}
+
+async function runSecondOpinion(approach, agent = 'gemini') {
+  const prompt =
+    `Give a concise second opinion on the following decision or approach.\n` +
+    `Be direct: state what you agree with, what concerns you, and your overall verdict (approve / approve-with-caveats / reject).\n\n` +
+    `${approach}`;
+  const fns = { claude: delegateToClaude, gemini: delegateToGemini, codex: delegateToCodex };
+  const fn = fns[agent];
+  if (!fn) throw new Error(`Unknown agent: ${agent}`);
+  const output = (await fn(prompt)).trim();
+  return [{ name: agent, output }];
+}
+
 // Create MCP server
 const server = new Server(
   {
@@ -197,40 +355,58 @@ server.setRequestHandler('tools/list', async () => {
 
 // Handle tool calls
 server.setRequestHandler('tools/call', async (request) => {
-  const { name, arguments: args } = request.params;
+  const { name, arguments: args = {} } = request.params;
 
-  if (!args || typeof args.task !== 'string') {
-    throw new Error('Missing required parameter: task');
+  let results;
+
+  function requireString(value, name) {
+    if (typeof value !== 'string') throw new Error(`Missing required parameter: ${name}`);
+    const trimmed = value.trim();
+    if (!trimmed) throw new Error(`Parameter ${name} must be a non-empty string`);
+    return trimmed;
   }
 
-  const task = args.task.trim();
-  if (!task) {
-    throw new Error('Task cannot be empty');
-  }
-
-  let result;
-  
   switch (name) {
-    case 'delegate_claude':
-      result = await delegateToClaude(task);
+    case 'delegate_claude': {
+      const task = requireString(args.task, 'task');
+      return { content: [{ type: 'text', text: (await delegateToClaude(task)).trim() }] };
+    }
+    case 'delegate_gemini': {
+      const task = requireString(args.task, 'task');
+      return { content: [{ type: 'text', text: (await delegateToGemini(task)).trim() }] };
+    }
+    case 'delegate_codex': {
+      const task = requireString(args.task, 'task');
+      return { content: [{ type: 'text', text: (await delegateToCodex(task)).trim() }] };
+    }
+    case 'council': {
+      const task = requireString(args.task, 'task');
+      results = await runCouncil(task);
       break;
-    case 'delegate_gemini':
-      result = await delegateToGemini(task);
+    }
+    case 'parallel_review': {
+      results = await runParallelReview();
       break;
-    case 'delegate_codex':
-      result = await delegateToCodex(task);
+    }
+    case 'parallel_debug': {
+      const symptom = requireString(args.symptom, 'symptom');
+      results = await runParallelDebug(symptom);
       break;
+    }
+    case 'second_opinion': {
+      const approach = requireString(args.approach, 'approach');
+      const supportedAgents = new Set(['claude', 'gemini', 'codex']);
+      const agent = args.agent ?? 'gemini';
+      if (!supportedAgents.has(agent)) throw new Error(`Invalid agent: ${agent}. Choose from: claude, gemini, codex`);
+      results = await runSecondOpinion(approach, agent);
+      break;
+    }
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
 
   return {
-    content: [
-      {
-        type: 'text',
-        text: result
-      }
-    ]
+    content: [{ type: 'text', text: delimit(results) }]
   };
 });
 
