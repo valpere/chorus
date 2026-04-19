@@ -14,17 +14,21 @@ const REGISTRY = {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+/** Returns { status: 'ok' | 'not-installed' | 'unavailable', version: string }. */
 function checkCli(binary) {
   const r = spawnSync(binary, ['--version'], { encoding: 'utf8' });
-  return !r.error && r.status === 0;
+  if (r.error?.code === 'ENOENT') return { status: 'not-installed', version: '' };
+  if (r.error || r.status !== 0) return { status: 'unavailable', version: '' };
+  return { status: 'ok', version: r.stdout.trim() };
 }
 
-/** Split an agent list into {available, missing}. */
+/** Split an agent list into {available, missing}. missing entries carry a `reason` field. */
 function filterAvailable(agents) {
   const available = [];
   const missing = [];
   for (const a of agents) {
-    checkCli(a.binary) ? available.push(a) : missing.push(a);
+    const { status } = checkCli(a.binary);
+    status === 'ok' ? available.push(a) : missing.push({ ...a, reason: status });
   }
   return { available, missing };
 }
@@ -32,9 +36,13 @@ function filterAvailable(agents) {
 /** Print a warning block for skipped agents (goes to stdout so Claude reads it). */
 function printMissingWarning(missing) {
   if (missing.length === 0) return;
-  console.log(`\n⚠ Skipped agents (not installed):`);
+  console.log(`\n⚠ Skipped agents:`);
   for (const a of missing) {
-    console.log(`  ✗ ${a.name} — install with: ${REGISTRY[a.name]?.setup ?? `/${a.name}:setup`}`);
+    if (a.reason === 'not-installed') {
+      console.log(`  ✗ ${a.name} — not installed. Run: ${REGISTRY[a.name]?.setup ?? `/${a.name}:setup`}`);
+    } else {
+      console.log(`  ✗ ${a.name} — unavailable (failed --version check). Check your installation.`);
+    }
   }
 }
 
@@ -102,11 +110,14 @@ function requireAvailable(agents, min = 2) {
 if (cmd === 'check-all') {
   let ok = true;
   for (const [name, { binary, setup }] of Object.entries(REGISTRY)) {
-    if (checkCli(binary)) {
-      const v = spawnSync(binary, ['--version'], { encoding: 'utf8' }).stdout.trim();
-      console.log(`✓ ${name}: ${v}`);
+    const { status, version } = checkCli(binary);
+    if (status === 'ok') {
+      console.log(`✓ ${name}: ${version}`);
+    } else if (status === 'not-installed') {
+      console.error(`✗ ${name} not installed. Run ${setup}`);
+      ok = false;
     } else {
-      console.error(`✗ ${name} not found. Run ${setup}`);
+      console.error(`✗ ${name} unavailable (failed --version check). Check your installation.`);
       ok = false;
     }
   }
@@ -287,9 +298,9 @@ if (cmd === 'second-opinion') {
   const defaultOrder = ['gemini', 'claude', 'codex', 'kilo', 'cursor'];
   let chosenAgent = requestedAgent ?? 'gemini';
 
-  if (!checkCli(agentDefs[chosenAgent].binary)) {
+  if (checkCli(agentDefs[chosenAgent].binary).status !== 'ok') {
     const fallback = (requestedAgent ? Object.keys(agentDefs) : defaultOrder)
-      .find(n => n !== chosenAgent && checkCli(agentDefs[n].binary));
+      .find(n => n !== chosenAgent && checkCli(agentDefs[n].binary).status === 'ok');
 
     if (!fallback) {
       console.error(`Agent "${chosenAgent}" not found and no alternatives are available.`);

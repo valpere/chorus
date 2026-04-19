@@ -23,11 +23,7 @@ Raw slash-command arguments:
 - Strip `--background` and `--wait` before passing to the companion.
 
 **Pre-flight:**
-Run:
-```bash
-node "$CLAUDE_PLUGIN_ROOT/scripts/companion.mjs" check-all
-```
-If it exits non-zero, stop and tell the user which agents are missing.
+The companion automatically checks which agents are installed. Missing agents are reported in stdout with install instructions. The council proceeds with whatever agents are available — at least 2 are required; if fewer are installed the companion exits non-zero and you should tell the user to install more agents.
 
 **Foreground execution:**
 ```bash
@@ -45,7 +41,7 @@ Bash({
 
 **After the companion exits, synthesize as chairman:**
 
-The companion output contains five delimited sections — one per agent.
+The companion output contains one delimited section per available agent (up to five).
 Read each section and produce a structured synthesis:
 
 ```
