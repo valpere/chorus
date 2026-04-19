@@ -14,17 +14,21 @@ const REGISTRY = {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+/** Returns 'ok' | 'not-installed' | 'unavailable'. */
 function checkCli(binary) {
   const r = spawnSync(binary, ['--version'], { encoding: 'utf8' });
-  return !r.error && r.status === 0;
+  if (r.error?.code === 'ENOENT') return 'not-installed';
+  if (r.error || r.status !== 0) return 'unavailable';
+  return 'ok';
 }
 
-/** Split an agent list into {available, missing}. */
+/** Split an agent list into {available, missing}. missing entries carry a `reason` field. */
 function filterAvailable(agents) {
   const available = [];
   const missing = [];
   for (const a of agents) {
-    checkCli(a.binary) ? available.push(a) : missing.push(a);
+    const status = checkCli(a.binary);
+    status === 'ok' ? available.push(a) : missing.push({ ...a, reason: status });
   }
   return { available, missing };
 }
@@ -32,9 +36,13 @@ function filterAvailable(agents) {
 /** Print a warning block for skipped agents (goes to stdout so Claude reads it). */
 function printMissingWarning(missing) {
   if (missing.length === 0) return;
-  console.log(`\n⚠ Skipped agents (not installed):`);
+  console.log(`\n⚠ Skipped agents:`);
   for (const a of missing) {
-    console.log(`  ✗ ${a.name} — install with: ${REGISTRY[a.name]?.setup ?? `/${a.name}:setup`}`);
+    if (a.reason === 'not-installed') {
+      console.log(`  ✗ ${a.name} — not installed. Run: ${REGISTRY[a.name]?.setup ?? `/${a.name}:setup`}`);
+    } else {
+      console.log(`  ✗ ${a.name} — unavailable (failed --version check). Check your installation.`);
+    }
   }
 }
 
@@ -102,11 +110,15 @@ function requireAvailable(agents, min = 2) {
 if (cmd === 'check-all') {
   let ok = true;
   for (const [name, { binary, setup }] of Object.entries(REGISTRY)) {
-    if (checkCli(binary)) {
+    const status = checkCli(binary);
+    if (status === 'ok') {
       const v = spawnSync(binary, ['--version'], { encoding: 'utf8' }).stdout.trim();
       console.log(`✓ ${name}: ${v}`);
+    } else if (status === 'not-installed') {
+      console.error(`✗ ${name} not installed. Run ${setup}`);
+      ok = false;
     } else {
-      console.error(`✗ ${name} not found. Run ${setup}`);
+      console.error(`✗ ${name} unavailable (failed --version check). Check your installation.`);
       ok = false;
     }
   }
