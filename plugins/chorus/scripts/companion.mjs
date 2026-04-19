@@ -121,7 +121,7 @@ if (cmd === 'council') {
 
   const agents = [
     {
-      name: 'claude', binary: 'claude',
+      name: 'claude', binary: REGISTRY.claude.binary,
       args: ['--print',
         `You are the CORRECTNESS reviewer in an LLM council.\n` +
         `Focus on: logic errors, type safety, off-by-one bugs, unhandled edge cases, security issues.\n` +
@@ -129,7 +129,7 @@ if (cmd === 'council') {
         '--dangerously-skip-permissions']
     },
     {
-      name: 'gemini', binary: 'gemini',
+      name: 'gemini', binary: REGISTRY.gemini.binary,
       args: ['--prompt',
         `You are the EDGE-CASES reviewer in an LLM council.\n` +
         `Focus on: unusual inputs, failure modes, race conditions, what was not considered, alternative approaches.\n` +
@@ -137,21 +137,21 @@ if (cmd === 'council') {
         '--yolo', '--output-format', 'text']
     },
     {
-      name: 'codex', binary: 'codex',
+      name: 'codex', binary: REGISTRY.codex.binary,
       args: ['exec',
         `You are the SCOPE reviewer in an LLM council.\n` +
         `Focus on: unnecessary complexity, premature abstractions, whether the smallest solution was chosen.\n` +
         `Be concise — bullet points preferred.\n\nTask: ${task}`]
     },
     {
-      name: 'cursor', binary: 'agent',
+      name: 'cursor', binary: REGISTRY.cursor.binary,
       args: ['-p', '--force',
         `You are the INTEGRATION reviewer in an LLM council.\n` +
         `Focus on: how this fits with existing codebase patterns, dependency implications, integration risks.\n` +
         `Be concise — bullet points preferred.\n\nTask: ${task}`]
     },
     {
-      name: 'kilo', binary: 'kilo',
+      name: 'kilo', binary: REGISTRY.kilo.binary,
       args: ['run', '--auto',
         `You are the MAINTAINABILITY reviewer in an LLM council.\n` +
         `Focus on: readability, naming, long-term tech debt, whether this will be easy to change later.\n` +
@@ -177,7 +177,7 @@ if (cmd === 'review') {
 
   const agents = [
     {
-      name: 'claude', binary: 'claude',
+      name: 'claude', binary: REGISTRY.claude.binary,
       args: ['--print',
         `Review the following code changes for CORRECTNESS AND SECURITY.\n` +
         `Focus on: bugs, logic errors, security vulnerabilities, unsafe patterns.\n` +
@@ -185,7 +185,7 @@ if (cmd === 'review') {
         '--dangerously-skip-permissions']
     },
     {
-      name: 'gemini', binary: 'gemini',
+      name: 'gemini', binary: REGISTRY.gemini.binary,
       args: ['--prompt',
         `Review the following code changes for EDGE CASES AND ROBUSTNESS.\n` +
         `Focus on: unhandled inputs, missing error handling, race conditions, what the author missed.\n` +
@@ -193,21 +193,21 @@ if (cmd === 'review') {
         '--yolo', '--output-format', 'text']
     },
     {
-      name: 'codex', binary: 'codex',
+      name: 'codex', binary: REGISTRY.codex.binary,
       args: ['exec',
         `Review the following code changes for SCOPE AND SIMPLICITY.\n` +
         `Focus on: unnecessary complexity, changes that exceed the stated goal, simpler alternatives.\n` +
         `Be concise — numbered findings.\n\n${diff}`]
     },
     {
-      name: 'cursor', binary: 'agent',
+      name: 'cursor', binary: REGISTRY.cursor.binary,
       args: ['-p', '--force',
         `Review the following code changes for CODEBASE INTEGRATION.\n` +
         `Focus on: consistency with existing patterns, dependency risks, integration issues.\n` +
         `Be concise — numbered findings.\n\n${diff}`]
     },
     {
-      name: 'kilo', binary: 'kilo',
+      name: 'kilo', binary: REGISTRY.kilo.binary,
       args: ['run', '--auto',
         `Review the following code changes for MAINTAINABILITY.\n` +
         `Focus on: readability, naming clarity, long-term tech debt introduced.\n` +
@@ -233,15 +233,15 @@ if (cmd === 'debug') {
     `Symptom: ${symptom}`;
 
   const agents = [
-    { name: 'claude', binary: 'claude',
+    { name: 'claude', binary: REGISTRY.claude.binary,
       args: ['--print', prompt('application logic, state management, data flow'), '--dangerously-skip-permissions'] },
-    { name: 'gemini', binary: 'gemini',
+    { name: 'gemini', binary: REGISTRY.gemini.binary,
       args: ['--prompt', prompt('infrastructure, concurrency, external dependencies, environment'), '--yolo', '--output-format', 'text'] },
-    { name: 'codex', binary: 'codex',
+    { name: 'codex', binary: REGISTRY.codex.binary,
       args: ['exec', prompt('edge cases in input handling, off-by-one errors, type coercion')] },
-    { name: 'cursor', binary: 'agent',
+    { name: 'cursor', binary: REGISTRY.cursor.binary,
       args: ['-p', '--force', prompt('framework, library, and third-party integration issues')] },
-    { name: 'kilo', binary: 'kilo',
+    { name: 'kilo', binary: REGISTRY.kilo.binary,
       args: ['run', '--auto', prompt('naming, types, readability, and long-term maintainability')] }
   ];
 
@@ -257,7 +257,7 @@ if (cmd === 'second-opinion') {
   const agentIndex = rest.indexOf('--agent');
   const agentNextValue = agentIndex !== -1 && rest[agentIndex + 1] && !rest[agentIndex + 1].startsWith('--')
     ? rest[agentIndex + 1] : undefined;
-  const requestedAgent = agentEqualsFlag ?? agentNextValue;
+  const requestedAgent = agentEqualsFlag || agentNextValue || undefined;
 
   const task = stripFlags(rest).join(' ').trim();
   if (!task) {
@@ -271,11 +271,11 @@ if (cmd === 'second-opinion') {
     `${task}`;
 
   const agentDefs = {
-    claude: { binary: 'claude', run: () => runAgent('claude', 'claude', ['--print', prompt, '--dangerously-skip-permissions']) },
-    gemini: { binary: 'gemini', run: () => runAgent('gemini', 'gemini', ['--prompt', prompt, '--yolo', '--output-format', 'text']) },
-    codex:  { binary: 'codex',  run: () => runAgent('codex',  'codex',  ['exec', prompt]) },
-    cursor: { binary: 'agent',  run: () => runAgent('cursor', 'agent',  ['-p', '--force', prompt]) },
-    kilo:   { binary: 'kilo',   run: () => runAgent('kilo',   'kilo',   ['run', '--auto', prompt]) },
+    claude: { binary: REGISTRY.claude.binary, run: () => runAgent('claude', REGISTRY.claude.binary, ['--print', prompt, '--dangerously-skip-permissions']) },
+    gemini: { binary: REGISTRY.gemini.binary, run: () => runAgent('gemini', REGISTRY.gemini.binary, ['--prompt', prompt, '--yolo', '--output-format', 'text']) },
+    codex:  { binary: REGISTRY.codex.binary,  run: () => runAgent('codex',  REGISTRY.codex.binary,  ['exec', prompt]) },
+    cursor: { binary: REGISTRY.cursor.binary, run: () => runAgent('cursor', REGISTRY.cursor.binary, ['-p', '--force', prompt]) },
+    kilo:   { binary: REGISTRY.kilo.binary,   run: () => runAgent('kilo',   REGISTRY.kilo.binary,   ['run', '--auto', prompt]) },
   };
 
   if (requestedAgent && !agentDefs[requestedAgent]) {
