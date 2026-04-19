@@ -531,7 +531,7 @@ server.setRequestHandler('tools/call', async (request) => {
       const approach = requireString(args.approach, 'approach');
       const supportedAgents = new Set(['claude', 'gemini', 'codex', 'cursor', 'kilo']);
       const agent = args.agent ?? 'gemini';
-      if (!supportedAgents.has(agent)) throw new Error(`Invalid agent: ${agent}. Choose from: claude, gemini, codex`);
+      if (!supportedAgents.has(agent)) throw new Error(`Invalid agent: ${agent}. Choose from: ${[...supportedAgents].join(', ')}`);
       results = await runSecondOpinion(approach, agent);
       break;
     }

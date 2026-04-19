@@ -114,7 +114,7 @@ if (cmd === 'council') {
       name: 'cursor',
       binary: 'agent',
       args: [
-        '-p',
+        '-p', '--force',
         `You are the INTEGRATION reviewer in an LLM council.\n` +
         `Focus on: how this fits with existing codebase patterns, dependency implications, integration risks.\n` +
         `Be concise — bullet points preferred.\n\nTask: ${task}`
@@ -184,7 +184,7 @@ if (cmd === 'review') {
       name: 'cursor',
       binary: 'agent',
       args: [
-        '-p',
+        '-p', '--force',
         `Review the following code changes for CODEBASE INTEGRATION.\n` +
         `Focus on: consistency with existing patterns, dependency risks, integration issues.\n` +
         `Be concise — numbered findings.\n\n${diff}`
@@ -237,7 +237,7 @@ if (cmd === 'debug') {
     {
       name: 'cursor',
       binary: 'agent',
-      args: ['-p', prompt('framework, library, and third-party integration issues')]
+      args: ['-p', '--force', prompt('framework, library, and third-party integration issues')]
     },
     {
       name: 'kilo',
@@ -270,7 +270,7 @@ if (cmd === 'second-opinion') {
     claude:  () => runAgent('claude',  'claude', ['--print', prompt, '--dangerously-skip-permissions']),
     gemini:  () => runAgent('gemini',  'gemini', ['--prompt', prompt, '--yolo', '--output-format', 'text']),
     codex:   () => runAgent('codex',   'codex',  ['exec', prompt]),
-    cursor:  () => runAgent('cursor',  'agent',  ['-p', prompt]),
+    cursor:  () => runAgent('cursor',  'agent',  ['-p', '--force', prompt]),
     kilo:    () => runAgent('kilo',    'kilo',   ['run', '--auto', prompt]),
   };
 
