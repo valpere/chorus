@@ -1,19 +1,19 @@
 # Chorus
 
-Cross-agent plugin collection for AI coding CLIs. Delegate tasks between Claude Code, OpenCode, Gemini CLI, and Codex.
+Cross-agent plugin collection for AI coding CLIs. Delegate tasks between Claude Code, OpenCode, Gemini CLI, Codex, Cursor, and Kilo.
 
 ![chorus delegation mesh](docs/infographic.png)
 
 ## Overview
 
-Chorus enables four AI coding agents to delegate tasks to each other, creating a mesh of cross-agent capabilities. Get multiple perspectives on your code or run parallel tasks using different AI agents.
+Chorus connects six AI coding agents through a delegation mesh. The original four (Claude Code, OpenCode, Gemini CLI, Codex) can delegate in any direction. Cursor and Kilo are supported as delegation targets from all four.
 
-| From \ To | Claude | OpenCode | Gemini | Codex |
-|-----------|--------|----------|--------|-------|
-| **Claude Code** | self ✅ | ✅ | ✅ | ✅ |
-| **OpenCode** | ✅ | self | ✅ | ✅ |
-| **Gemini CLI** | ✅ | ✅ | self | ✅ |
-| **Codex** | ✅ | ✅ | ✅ | self |
+| From \ To | Claude | OpenCode | Gemini | Codex | Cursor | Kilo |
+|-----------|--------|----------|--------|-------|--------|------|
+| **Claude Code** | self ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **OpenCode** | ✅ | self | ✅ | ✅ | ✅ | ✅ |
+| **Gemini CLI** | ✅ | ✅ | self | ✅ | ✅ | ✅ |
+| **Codex** | ✅ | ✅ | ✅ | self | ✅ | ✅ |
 
 ## Installation
 
@@ -28,12 +28,14 @@ Adds slash commands:
 - `/gemini:run`, `/gemini:review`
 - `/codex:run`, `/codex:review`
 - `/claude:run`, `/claude:review` (second Claude instance)
+- `/cursor:run`, `/cursor:review`, `/cursor:setup`
+- `/kilo:run`, `/kilo:review`, `/kilo:setup`
 
 **Workflow patterns** (orchestrate multiple agents at once):
-- `/chorus:council` — LLM council: all three agents, different roles, you synthesize
-- `/chorus:review` — parallel code review from all three agents
+- `/chorus:council` — LLM council: five agents, different roles, you synthesize
+- `/chorus:review` — parallel code review from all five agents
 - `/chorus:debug` — parallel root-cause hypotheses for a bug symptom
-- `/chorus:second-opinion` — quick independent check from one agent
+- `/chorus:second-opinion` — quick independent check from one agent (`--agent cursor|kilo` supported)
 
 ### OpenCode
 
@@ -45,10 +47,12 @@ Adds MCP tools:
 - `delegate_claude(task: string) → string`
 - `delegate_gemini(task: string) → string`
 - `delegate_codex(task: string) → string`
-- `council(task: string) → string` — parallel council, all three agents
+- `delegate_cursor(task: string) → string`
+- `delegate_kilo(task: string) → string`
+- `council(task: string) → string` — parallel council, all five agents
 - `parallel_review() → string` — parallel review of current git diff
 - `parallel_debug(symptom: string) → string` — parallel root-cause hypotheses
-- `second_opinion(approach: string, agent?: string) → string`
+- `second_opinion(approach: string, agent?: 'claude'|'gemini'|'codex'|'cursor'|'kilo') → string`
 
 ### Gemini CLI
 
@@ -57,6 +61,8 @@ Adds MCP tools:
 gemini skills install https://github.com/valpere/chorus --path for-gemini/claude
 gemini skills install https://github.com/valpere/chorus --path for-gemini/opencode
 gemini skills install https://github.com/valpere/chorus --path for-gemini/codex
+gemini skills install https://github.com/valpere/chorus --path for-gemini/cursor
+gemini skills install https://github.com/valpere/chorus --path for-gemini/kilo
 
 # Workflow pattern skills
 gemini skills install https://github.com/valpere/chorus --path for-gemini/council
@@ -69,7 +75,9 @@ Adds skills:
 - `chorus-claude` - Delegate to Claude Code
 - `chorus-opencode` - Delegate to OpenCode
 - `chorus-codex` - Delegate to Codex
-- `chorus-council` - LLM council with all three agents
+- `chorus-cursor` - Delegate to Cursor Agent CLI
+- `chorus-kilo` - Delegate to Kilo Code CLI
+- `chorus-council` - LLM council with all five agents
 - `chorus-parallel-review` - Parallel code review
 - `chorus-parallel-debug` - Parallel root-cause hypotheses
 - `chorus-second-opinion` - Quick independent second opinion
@@ -80,10 +88,13 @@ Adds skills:
 git clone https://github.com/valpere/chorus /tmp/chorus
 
 # Delegation skills
-mkdir -p ~/.codex/skills/chorus-claude ~/.codex/skills/chorus-opencode ~/.codex/skills/chorus-gemini
+mkdir -p ~/.codex/skills/chorus-claude ~/.codex/skills/chorus-opencode \
+         ~/.codex/skills/chorus-gemini ~/.codex/skills/chorus-cursor ~/.codex/skills/chorus-kilo
 cp /tmp/chorus/for-codex/claude/SKILL.md ~/.codex/skills/chorus-claude/
 cp /tmp/chorus/for-codex/opencode/SKILL.md ~/.codex/skills/chorus-opencode/
 cp /tmp/chorus/for-codex/gemini/SKILL.md ~/.codex/skills/chorus-gemini/
+cp /tmp/chorus/for-codex/cursor/SKILL.md ~/.codex/skills/chorus-cursor/
+cp /tmp/chorus/for-codex/kilo/SKILL.md ~/.codex/skills/chorus-kilo/
 
 # Workflow pattern skills
 mkdir -p ~/.codex/skills/chorus-council ~/.codex/skills/chorus-parallel-review \
@@ -98,7 +109,9 @@ Adds skills:
 - `chorus-claude` - Delegate to Claude Code
 - `chorus-opencode` - Delegate to OpenCode
 - `chorus-gemini` - Delegate to Gemini CLI
-- `chorus-council` - LLM council with all three agents
+- `chorus-cursor` - Delegate to Cursor Agent CLI
+- `chorus-kilo` - Delegate to Kilo Code CLI
+- `chorus-council` - LLM council with all five agents
 - `chorus-parallel-review` - Parallel code review
 - `chorus-parallel-debug` - Parallel root-cause hypotheses
 - `chorus-second-opinion` - Quick independent second opinion
@@ -165,7 +178,7 @@ Three agents tackle the same task with different roles; the host synthesizes as 
 
 ### Parallel Review
 
-All three agents review the current `git diff HEAD` simultaneously, each with a different focus (correctness, edge cases, scope).
+All five agents review the current `git diff HEAD` simultaneously, each with a different focus (correctness, edge cases, scope, integration, maintainability).
 
 ```bash
 /chorus:review --wait
@@ -174,7 +187,7 @@ All three agents review the current `git diff HEAD` simultaneously, each with a 
 
 ### Parallel Debug
 
-All three agents propose root-cause hypotheses for a symptom; the host synthesizes an investigation plan.
+All five agents propose root-cause hypotheses for a symptom; the host synthesizes an investigation plan.
 
 ```bash
 /chorus:debug "Checkout fails intermittently with a 500 — only in production, never in staging"
@@ -188,6 +201,8 @@ Quick independent check from one agent. Default: Gemini. Override with `--agent`
 /chorus:second-opinion "Use a ULID instead of UUID for the new events table primary key"
 /chorus:second-opinion --agent claude "Cache the auth token in localStorage vs sessionStorage"
 /chorus:second-opinion --agent codex "Extract this 30-line block into a shared utility"
+/chorus:second-opinion --agent cursor "Does this change fit the existing patterns in this repo?"
+/chorus:second-opinion --agent kilo "Is this function name clear enough for future maintainers?"
 ```
 
 ---
@@ -206,6 +221,8 @@ All `run` and `review` commands support two execution modes:
 - [OpenCode](https://opencode.ai) (for delegation to/from OpenCode)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli) (for delegation to/from Gemini)
 - [Codex](https://github.com/openai/codex) (for delegation to/from Codex)
+- [Cursor Agent CLI](https://cursor.com/docs/cli) (`agent` binary, optional — for Cursor delegation)
+- [Kilo Code CLI](https://kilo.ai/docs/cli) (`kilo` binary, optional — for Kilo delegation)
 
 ## Project Structure
 
@@ -218,11 +235,15 @@ chorus/
 │   ├── opencode/              # OpenCode plugin
 │   ├── gemini/                # Gemini CLI plugin
 │   ├── codex/                 # Codex plugin
+│   ├── cursor/                # Cursor Agent CLI plugin
+│   ├── kilo/                  # Kilo Code CLI plugin
 │   └── chorus/                # Workflow patterns (council, review, debug, second-opinion)
 ├── for-gemini/                # Gemini CLI skills
 │   ├── claude/SKILL.md
 │   ├── opencode/SKILL.md
 │   ├── codex/SKILL.md
+│   ├── cursor/SKILL.md
+│   ├── kilo/SKILL.md
 │   ├── council/SKILL.md
 │   ├── parallel-review/SKILL.md
 │   ├── parallel-debug/SKILL.md
@@ -231,6 +252,8 @@ chorus/
 │   ├── claude/SKILL.md
 │   ├── opencode/SKILL.md
 │   ├── gemini/SKILL.md
+│   ├── cursor/SKILL.md
+│   ├── kilo/SKILL.md
 │   ├── council/SKILL.md
 │   ├── parallel-review/SKILL.md
 │   ├── parallel-debug/SKILL.md
