@@ -14,12 +14,12 @@ const REGISTRY = {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-/** Returns 'ok' | 'not-installed' | 'unavailable'. */
+/** Returns { status: 'ok' | 'not-installed' | 'unavailable', version: string }. */
 function checkCli(binary) {
   const r = spawnSync(binary, ['--version'], { encoding: 'utf8' });
-  if (r.error?.code === 'ENOENT') return 'not-installed';
-  if (r.error || r.status !== 0) return 'unavailable';
-  return 'ok';
+  if (r.error?.code === 'ENOENT') return { status: 'not-installed', version: '' };
+  if (r.error || r.status !== 0) return { status: 'unavailable', version: '' };
+  return { status: 'ok', version: r.stdout.trim() };
 }
 
 /** Split an agent list into {available, missing}. missing entries carry a `reason` field. */
@@ -27,7 +27,7 @@ function filterAvailable(agents) {
   const available = [];
   const missing = [];
   for (const a of agents) {
-    const status = checkCli(a.binary);
+    const { status } = checkCli(a.binary);
     status === 'ok' ? available.push(a) : missing.push({ ...a, reason: status });
   }
   return { available, missing };
@@ -110,10 +110,9 @@ function requireAvailable(agents, min = 2) {
 if (cmd === 'check-all') {
   let ok = true;
   for (const [name, { binary, setup }] of Object.entries(REGISTRY)) {
-    const status = checkCli(binary);
+    const { status, version } = checkCli(binary);
     if (status === 'ok') {
-      const v = spawnSync(binary, ['--version'], { encoding: 'utf8' }).stdout.trim();
-      console.log(`✓ ${name}: ${v}`);
+      console.log(`✓ ${name}: ${version}`);
     } else if (status === 'not-installed') {
       console.error(`✗ ${name} not installed. Run ${setup}`);
       ok = false;
@@ -299,9 +298,9 @@ if (cmd === 'second-opinion') {
   const defaultOrder = ['gemini', 'claude', 'codex', 'kilo', 'cursor'];
   let chosenAgent = requestedAgent ?? 'gemini';
 
-  if (!checkCli(agentDefs[chosenAgent].binary)) {
+  if (checkCli(agentDefs[chosenAgent].binary).status !== 'ok') {
     const fallback = (requestedAgent ? Object.keys(agentDefs) : defaultOrder)
-      .find(n => n !== chosenAgent && checkCli(agentDefs[n].binary));
+      .find(n => n !== chosenAgent && checkCli(agentDefs[n].binary).status === 'ok');
 
     if (!fallback) {
       console.error(`Agent "${chosenAgent}" not found and no alternatives are available.`);
