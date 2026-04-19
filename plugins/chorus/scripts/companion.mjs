@@ -57,7 +57,7 @@ function printDelimited(results) {
 // ── check-all ────────────────────────────────────────────────────────────────
 
 if (cmd === 'check-all') {
-  const agents = [['claude', 'claude'], ['gemini', 'gemini'], ['codex', 'codex']];
+  const agents = [['claude', 'claude'], ['gemini', 'gemini'], ['codex', 'codex'], ['cursor', 'agent'], ['kilo', 'kilo']];
   let ok = true;
   for (const [name, bin] of agents) {
     if (checkCli(bin)) {
@@ -107,6 +107,26 @@ if (cmd === 'council') {
         'exec',
         `You are the SCOPE reviewer in an LLM council.\n` +
         `Focus on: unnecessary complexity, premature abstractions, whether the smallest solution was chosen.\n` +
+        `Be concise — bullet points preferred.\n\nTask: ${task}`
+      ]
+    },
+    {
+      name: 'cursor',
+      binary: 'agent',
+      args: [
+        '-p',
+        `You are the INTEGRATION reviewer in an LLM council.\n` +
+        `Focus on: how this fits with existing codebase patterns, dependency implications, integration risks.\n` +
+        `Be concise — bullet points preferred.\n\nTask: ${task}`
+      ]
+    },
+    {
+      name: 'kilo',
+      binary: 'kilo',
+      args: [
+        'run', '--auto',
+        `You are the MAINTAINABILITY reviewer in an LLM council.\n` +
+        `Focus on: readability, naming, long-term tech debt, whether this will be easy to change later.\n` +
         `Be concise — bullet points preferred.\n\nTask: ${task}`
       ]
     }
@@ -159,6 +179,26 @@ if (cmd === 'review') {
         `Focus on: unnecessary complexity, changes that exceed the stated goal, simpler alternatives.\n` +
         `Be concise — numbered findings.\n\n${diff}`
       ]
+    },
+    {
+      name: 'cursor',
+      binary: 'agent',
+      args: [
+        '-p',
+        `Review the following code changes for CODEBASE INTEGRATION.\n` +
+        `Focus on: consistency with existing patterns, dependency risks, integration issues.\n` +
+        `Be concise — numbered findings.\n\n${diff}`
+      ]
+    },
+    {
+      name: 'kilo',
+      binary: 'kilo',
+      args: [
+        'run', '--auto',
+        `Review the following code changes for MAINTAINABILITY.\n` +
+        `Focus on: readability, naming clarity, long-term tech debt introduced.\n` +
+        `Be concise — numbered findings.\n\n${diff}`
+      ]
     }
   ];
 
@@ -193,6 +233,16 @@ if (cmd === 'debug') {
       name: 'codex',
       binary: 'codex',
       args: ['exec', prompt('edge cases in input handling, off-by-one errors, type coercion')]
+    },
+    {
+      name: 'cursor',
+      binary: 'agent',
+      args: ['-p', prompt('framework, library, and third-party integration issues')]
+    },
+    {
+      name: 'kilo',
+      binary: 'kilo',
+      args: ['run', '--auto', prompt('naming, types, readability, and long-term maintainability')]
     }
   ];
 
@@ -210,21 +260,23 @@ if (cmd === 'second-opinion') {
   const agentFlag = agentEqualsFlag ?? agentNextValue ?? 'gemini';
 
   const task = stripFlags(rest).join(' ').trim();
-  if (!task) { console.error('Usage: companion.mjs second-opinion [--agent claude|gemini|codex] <decision or approach>'); process.exit(1); }
+  if (!task) { console.error('Usage: companion.mjs second-opinion [--agent claude|gemini|codex|cursor|kilo] <decision or approach>'); process.exit(1); }
 
   const prompt = `Give a concise second opinion on the following decision or approach.\n` +
     `Be direct: state what you agree with, what concerns you, and your overall verdict (approve / approve-with-caveats / reject).\n\n` +
     `${task}`;
 
   const agentMap = {
-    claude: () => runAgent('claude', 'claude', ['--print', prompt, '--dangerously-skip-permissions']),
-    gemini: () => runAgent('gemini', 'gemini', ['--prompt', prompt, '--yolo', '--output-format', 'text']),
-    codex:  () => runAgent('codex',  'codex',  ['exec', prompt]),
+    claude:  () => runAgent('claude',  'claude', ['--print', prompt, '--dangerously-skip-permissions']),
+    gemini:  () => runAgent('gemini',  'gemini', ['--prompt', prompt, '--yolo', '--output-format', 'text']),
+    codex:   () => runAgent('codex',   'codex',  ['exec', prompt]),
+    cursor:  () => runAgent('cursor',  'agent',  ['-p', prompt]),
+    kilo:    () => runAgent('kilo',    'kilo',   ['run', '--auto', prompt]),
   };
 
   const runner = agentMap[agentFlag];
   if (!runner) {
-    console.error(`Unknown agent: ${agentFlag}. Choose from: claude, gemini, codex`);
+    console.error(`Unknown agent: ${agentFlag}. Choose from: claude, gemini, codex, cursor, kilo`);
     process.exit(1);
   }
 

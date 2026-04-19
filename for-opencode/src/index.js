@@ -33,6 +33,34 @@ const TOOLS = [
     }
   },
   {
+    name: 'delegate_cursor',
+    description: 'Delegate a task to Cursor Agent CLI and return its output verbatim',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: {
+          type: 'string',
+          description: 'The task to delegate to Cursor Agent CLI'
+        }
+      },
+      required: ['task']
+    }
+  },
+  {
+    name: 'delegate_kilo',
+    description: 'Delegate a task to Kilo Code CLI and return its output verbatim',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: {
+          type: 'string',
+          description: 'The task to delegate to Kilo Code CLI'
+        }
+      },
+      required: ['task']
+    }
+  },
+  {
     name: 'delegate_codex',
     description: 'Delegate a task to Codex and return its output verbatim',
     inputSchema: {
@@ -94,7 +122,7 @@ const TOOLS = [
         },
         agent: {
           type: 'string',
-          enum: ['claude', 'gemini', 'codex'],
+          enum: ['claude', 'gemini', 'codex', 'cursor', 'kilo'],
           description: 'Which agent to consult. Defaults to gemini.'
         }
       },
@@ -190,6 +218,70 @@ async function delegateToGemini(task) {
   });
 }
 
+// Execute Cursor Agent with a task
+async function delegateToCursor(task) {
+  const check = checkCli('agent');
+  if (!check.available) {
+    throw new Error(`Cursor Agent CLI not available: ${check.error}. Please install Cursor Agent CLI.`);
+  }
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn('agent', ['-p', '--force', task], {
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    proc.stdout.on('data', (data) => { stdout += data.toString(); });
+    proc.stderr.on('data', (data) => { stderr += data.toString(); });
+
+    proc.on('close', (code) => {
+      if (code !== 0 && code !== null) {
+        reject(new Error(`Cursor Agent exited with code ${code}: ${stderr || stdout}`));
+      } else {
+        resolve(stdout);
+      }
+    });
+
+    proc.on('error', (err) => {
+      reject(new Error(`Failed to run Cursor Agent: ${err.message}`));
+    });
+  });
+}
+
+// Execute Kilo with a task
+async function delegateToKilo(task) {
+  const check = checkCli('kilo');
+  if (!check.available) {
+    throw new Error(`Kilo Code CLI not available: ${check.error}. Please install Kilo Code CLI.`);
+  }
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn('kilo', ['run', '--auto', task], {
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    proc.stdout.on('data', (data) => { stdout += data.toString(); });
+    proc.stderr.on('data', (data) => { stderr += data.toString(); });
+
+    proc.on('close', (code) => {
+      if (code !== 0 && code !== null) {
+        reject(new Error(`Kilo exited with code ${code}: ${stderr || stdout}`));
+      } else {
+        resolve(stdout);
+      }
+    });
+
+    proc.on('error', (err) => {
+      reject(new Error(`Failed to run Kilo: ${err.message}`));
+    });
+  });
+}
+
 // Execute Codex with a task
 async function delegateToCodex(task) {
   const check = checkCli('codex');
@@ -272,6 +364,22 @@ async function runCouncil(task) {
         `Focus on: unnecessary complexity, premature abstractions, whether the smallest solution was chosen.\n` +
         `Be concise — bullet points preferred.\n\nTask: ${task}`
       )
+    },
+    {
+      name: 'cursor',
+      fn: () => delegateToCursor(
+        `You are the INTEGRATION reviewer in an LLM council.\n` +
+        `Focus on: how this fits with existing codebase patterns, dependency implications, integration risks.\n` +
+        `Be concise — bullet points preferred.\n\nTask: ${task}`
+      )
+    },
+    {
+      name: 'kilo',
+      fn: () => delegateToKilo(
+        `You are the MAINTAINABILITY reviewer in an LLM council.\n` +
+        `Focus on: readability, naming, long-term tech debt, whether this will be easy to change later.\n` +
+        `Be concise — bullet points preferred.\n\nTask: ${task}`
+      )
     }
   ]);
 }
@@ -307,6 +415,22 @@ async function runParallelReview() {
         `Focus on: unnecessary complexity, changes that exceed the stated goal, simpler alternatives.\n` +
         `Be concise — numbered findings.\n\n${diff}`
       )
+    },
+    {
+      name: 'cursor',
+      fn: () => delegateToCursor(
+        `Review these code changes for CODEBASE INTEGRATION.\n` +
+        `Focus on: consistency with existing patterns, dependency risks, integration issues.\n` +
+        `Be concise — numbered findings.\n\n${diff}`
+      )
+    },
+    {
+      name: 'kilo',
+      fn: () => delegateToKilo(
+        `Review these code changes for MAINTAINABILITY.\n` +
+        `Focus on: readability, naming clarity, long-term tech debt introduced.\n` +
+        `Be concise — numbered findings.\n\n${diff}`
+      )
     }
   ]);
 }
@@ -317,9 +441,11 @@ async function runParallelDebug(symptom) {
     `Focus area: ${focus}.\n` +
     `Format: numbered list, most likely first, one sentence per hypothesis.\n\nSymptom: ${symptom}`;
   return runParallel([
-    { name: 'claude', fn: () => delegateToClaude(prompt('application logic, state management, data flow')) },
-    { name: 'gemini', fn: () => delegateToGemini(prompt('infrastructure, concurrency, external dependencies, environment')) },
-    { name: 'codex',  fn: () => delegateToCodex(prompt('edge cases in input handling, type coercion, off-by-one errors')) }
+    { name: 'claude',  fn: () => delegateToClaude(prompt('application logic, state management, data flow')) },
+    { name: 'gemini',  fn: () => delegateToGemini(prompt('infrastructure, concurrency, external dependencies, environment')) },
+    { name: 'codex',   fn: () => delegateToCodex(prompt('edge cases in input handling, type coercion, off-by-one errors')) },
+    { name: 'cursor',  fn: () => delegateToCursor(prompt('framework, library, and third-party integration issues')) },
+    { name: 'kilo',    fn: () => delegateToKilo(prompt('naming, types, readability, and long-term maintainability')) }
   ]);
 }
 
@@ -328,7 +454,7 @@ async function runSecondOpinion(approach, agent = 'gemini') {
     `Give a concise second opinion on the following decision or approach.\n` +
     `Be direct: state what you agree with, what concerns you, and your overall verdict (approve / approve-with-caveats / reject).\n\n` +
     `${approach}`;
-  const fns = { claude: delegateToClaude, gemini: delegateToGemini, codex: delegateToCodex };
+  const fns = { claude: delegateToClaude, gemini: delegateToGemini, codex: delegateToCodex, cursor: delegateToCursor, kilo: delegateToKilo };
   const fn = fns[agent];
   if (!fn) throw new Error(`Unknown agent: ${agent}`);
   const output = (await fn(prompt)).trim();
@@ -375,6 +501,14 @@ server.setRequestHandler('tools/call', async (request) => {
       const task = requireString(args.task, 'task');
       return { content: [{ type: 'text', text: (await delegateToGemini(task)).trim() }] };
     }
+    case 'delegate_cursor': {
+      const task = requireString(args.task, 'task');
+      return { content: [{ type: 'text', text: (await delegateToCursor(task)).trim() }] };
+    }
+    case 'delegate_kilo': {
+      const task = requireString(args.task, 'task');
+      return { content: [{ type: 'text', text: (await delegateToKilo(task)).trim() }] };
+    }
     case 'delegate_codex': {
       const task = requireString(args.task, 'task');
       return { content: [{ type: 'text', text: (await delegateToCodex(task)).trim() }] };
@@ -395,7 +529,7 @@ server.setRequestHandler('tools/call', async (request) => {
     }
     case 'second_opinion': {
       const approach = requireString(args.approach, 'approach');
-      const supportedAgents = new Set(['claude', 'gemini', 'codex']);
+      const supportedAgents = new Set(['claude', 'gemini', 'codex', 'cursor', 'kilo']);
       const agent = args.agent ?? 'gemini';
       if (!supportedAgents.has(agent)) throw new Error(`Invalid agent: ${agent}. Choose from: claude, gemini, codex`);
       results = await runSecondOpinion(approach, agent);
