@@ -1,0 +1,29 @@
+---
+description: Delegate a task to Gemini CLI for a second opinion or alternative analysis. Activate when the user asks to delegate to Gemini, wants Gemini's perspective, or says "what would Gemini say".
+globs: []
+alwaysApply: false
+---
+
+# Chorus: Delegate to Gemini
+
+## When to use
+
+- User explicitly asks to delegate to Gemini
+- User wants a second opinion from Gemini
+- User wants to compare your answer with Gemini's
+- User asks "what would Gemini say?" or similar
+
+## Invocation
+
+Run Gemini CLI non-interactively:
+
+```bash
+gemini --prompt "<task>" --yolo --output-format text
+```
+
+The `--yolo` flag runs Gemini in non-interactive mode.
+The `--output-format text` flag suppresses ANSI formatting.
+
+## Output handling
+
+Return Gemini's output verbatim — no paraphrasing, no summaries, no added commentary.

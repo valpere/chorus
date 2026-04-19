@@ -1,6 +1,6 @@
 ---
 name: chorus-parallel-review
-description: Parallel code review of the current git diff from multiple agents — Claude (correctness/security), Gemini (edge cases), Cursor (integration), Kilo (maintainability), and you (scope/simplicity). Use when the user says "parallel review", "review with all agents", or "chorus review".
+description: Parallel code review of the current git diff from multiple agents. Use when the user says "parallel review", "review with all agents", "chorus review", or "review from multiple angles".
 ---
 
 # Chorus: Parallel Code Review
@@ -12,7 +12,7 @@ description: Parallel code review of the current git diff from multiple agents �
 
 ## Your role
 
-You review for **SCOPE AND SIMPLICITY**: unnecessary complexity, changes exceeding the stated goal, simpler alternatives.
+You review for **MAINTAINABILITY**: readability, naming clarity, long-term tech debt.
 
 ## Invocation
 
@@ -25,18 +25,18 @@ CLAUDE_PID=$!
 gemini --prompt "Review for EDGE CASES AND ROBUSTNESS. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" --yolo --output-format text &
 GEMINI_PID=$!
 
+codex exec "Review for SCOPE AND SIMPLICITY. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" &
+CODEX_PID=$!
+
 agent -p --force "Review for CODEBASE INTEGRATION. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" &
 CURSOR_PID=$!
 
-kilo run --auto "Review for MAINTAINABILITY. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" &
-KILO_PID=$!
-
-wait $CLAUDE_PID $GEMINI_PID $CURSOR_PID $KILO_PID
+wait $CLAUDE_PID $GEMINI_PID $CODEX_PID $CURSOR_PID
 ```
 
 ## Output handling
 
-Synthesize all five reviews (four agents + your scope review):
+Synthesize all five reviews (four agents + your maintainability review):
 
 ```
 ## Parallel Review Summary
@@ -45,7 +45,3 @@ Synthesize all five reviews (four agents + your scope review):
 ```
 
 Review-only — do not apply patches.
-
-## Known limitation
-
-Codex sandbox limits access to the current working directory. Reviews of files outside this scope will be incomplete.

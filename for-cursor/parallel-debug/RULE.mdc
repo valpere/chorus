@@ -1,0 +1,50 @@
+---
+description: Parallel root-cause hypotheses from multiple agents for a reported bug. Activate when the user says "parallel debug", "chorus debug", "multiple hypotheses", "debug with all agents", or describes a bug symptom and wants multiple perspectives.
+globs: []
+alwaysApply: false
+---
+
+# Chorus: Parallel Debug
+
+## When to use
+
+- Root cause of a bug is unclear
+- User says "parallel debug", "chorus debug", "hypotheses from all agents"
+- User describes a symptom and wants multiple root-cause perspectives
+
+## Your role
+
+You generate hypotheses focused on **framework, library, and third-party integration issues**.
+
+## Invocation
+
+```bash
+SYMPTOM="<symptom>"
+
+claude --print "Root-cause hypotheses, ranked by likelihood (numbered list). Focus: application logic, state management, data flow.\n\nSymptom: $SYMPTOM" --dangerously-skip-permissions &
+CLAUDE_PID=$!
+
+gemini --prompt "Root-cause hypotheses, ranked by likelihood (numbered list). Focus: infrastructure, concurrency, external dependencies, environment.\n\nSymptom: $SYMPTOM" --yolo --output-format text &
+GEMINI_PID=$!
+
+codex exec "Root-cause hypotheses, ranked by likelihood (numbered list). Focus: edge cases in input handling, type coercion, off-by-one errors.\n\nSymptom: $SYMPTOM" &
+CODEX_PID=$!
+
+kilo run --auto "Root-cause hypotheses, ranked by likelihood (numbered list). Focus: naming confusion, type misuse, readability issues that hide bugs.\n\nSymptom: $SYMPTOM" &
+KILO_PID=$!
+
+wait $CLAUDE_PID $GEMINI_PID $CODEX_PID $KILO_PID
+```
+
+## Output handling
+
+Merge all five hypothesis lists (four agents + your integration hypotheses), prioritize ones flagged by multiple agents:
+
+```
+## Hypothesis Pool (ranked)
+1. … (Claude + Gemini)
+2. … (Cursor)
+
+## Investigation Plan
+1. Check X first — rules out hypotheses 1 and 3
+```

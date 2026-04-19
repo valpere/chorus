@@ -25,6 +25,8 @@ metadata:
 |-------|-------|
 | Claude | Correctness and security (bugs, vulnerabilities, unsafe patterns) |
 | Codex | Scope and simplicity (unnecessary complexity, simpler alternatives) |
+| Cursor | Codebase integration (consistency with existing patterns, dependency risks) |
+| Kilo | Maintainability (readability, naming clarity, long-term tech debt) |
 | (you) | Edge cases and robustness (missing error handling, race conditions) |
 
 ## Invocation
@@ -33,22 +35,27 @@ metadata:
 # Get the diff first
 git diff HEAD > /tmp/chorus_diff.txt
 
-# Spawn Claude and Codex in parallel
+# Spawn all four in parallel
 claude --print "Review these code changes for CORRECTNESS AND SECURITY. Focus on: bugs, logic errors, security vulnerabilities. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" --dangerously-skip-permissions &
 CLAUDE_PID=$!
 
 codex exec "Review these code changes for SCOPE AND SIMPLICITY. Focus on: unnecessary complexity, changes exceeding the stated goal, simpler alternatives. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" &
 CODEX_PID=$!
 
-wait $CLAUDE_PID
-wait $CODEX_PID
+agent -p --force "Review these code changes for CODEBASE INTEGRATION. Focus on: consistency with existing patterns, framework conventions, dependency risks. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" &
+CURSOR_PID=$!
+
+kilo run --auto "Review these code changes for MAINTAINABILITY. Focus on: readability, naming clarity, long-term tech debt. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" &
+KILO_PID=$!
+
+wait $CLAUDE_PID $CODEX_PID $CURSOR_PID $KILO_PID
 ```
 
 Your own review (Gemini) covers **edge cases and robustness**. Produce it alongside the collected results.
 
 ## Output handling
 
-Synthesize all three reviews into a unified report:
+Synthesize all five reviews into a unified report:
 
 ```
 ## Parallel Review Summary
@@ -56,8 +63,8 @@ Synthesize all three reviews into a unified report:
 **Critical findings** (flagged by 2+ agents): …
 
 **Individual findings table:**
-| Finding | Claude | Gemini | Codex |
-|---------|--------|--------|-------|
+| Finding | Claude | Gemini | Codex | Cursor | Kilo |
+|---------|--------|--------|-------|--------|------|
 
 ## Verdict
 <1–2 sentences: should changes proceed as-is or need revision?>

@@ -6,7 +6,7 @@ Cross-agent plugin collection for AI coding CLIs. Delegate tasks between Claude 
 
 ## Overview
 
-Chorus connects six AI coding agents through a delegation mesh. The original four (Claude Code, OpenCode, Gemini CLI, Codex) can delegate in any direction. Cursor and Kilo are supported as delegation targets from all four.
+Chorus connects six AI coding agents through a full delegation mesh. Every agent can delegate to every other agent (see [Known Limitations](#known-limitations) for OpenCode output capture constraints).
 
 | From \ To | Claude | OpenCode | Gemini | Codex | Cursor | Kilo |
 |-----------|--------|----------|--------|-------|--------|------|
@@ -14,6 +14,8 @@ Chorus connects six AI coding agents through a delegation mesh. The original fou
 | **OpenCode** | ✅ | self | ✅ | ✅ | ✅ | ✅ |
 | **Gemini CLI** | ✅ | ✅ | self | ✅ | ✅ | ✅ |
 | **Codex** | ✅ | ✅ | ✅ | self | ✅ | ✅ |
+| **Cursor** | ✅ | ✅ | ✅ | ✅ | self | ✅ |
+| **Kilo** | ✅ | ✅ | ✅ | ✅ | ✅ | self |
 
 ## Installation
 
@@ -116,6 +118,72 @@ Adds skills:
 - `chorus-parallel-debug` - Parallel root-cause hypotheses
 - `chorus-second-opinion` - Quick independent second opinion
 
+### Cursor
+
+```bash
+git clone https://github.com/valpere/chorus /tmp/chorus
+
+mkdir -p .cursor/rules
+
+# Delegation rules
+cp /tmp/chorus/for-cursor/claude/RULE.mdc .cursor/rules/chorus-claude.mdc
+cp /tmp/chorus/for-cursor/opencode/RULE.mdc .cursor/rules/chorus-opencode.mdc
+cp /tmp/chorus/for-cursor/gemini/RULE.mdc .cursor/rules/chorus-gemini.mdc
+cp /tmp/chorus/for-cursor/codex/RULE.mdc .cursor/rules/chorus-codex.mdc
+cp /tmp/chorus/for-cursor/kilo/RULE.mdc .cursor/rules/chorus-kilo.mdc
+
+# Workflow pattern rules
+cp /tmp/chorus/for-cursor/council/RULE.mdc .cursor/rules/chorus-council.mdc
+cp /tmp/chorus/for-cursor/parallel-review/RULE.mdc .cursor/rules/chorus-parallel-review.mdc
+cp /tmp/chorus/for-cursor/parallel-debug/RULE.mdc .cursor/rules/chorus-parallel-debug.mdc
+cp /tmp/chorus/for-cursor/second-opinion/RULE.mdc .cursor/rules/chorus-second-opinion.mdc
+```
+
+Adds rules (activate via natural language in Cursor):
+- `chorus-claude` - Delegate to Claude Code
+- `chorus-opencode` - Delegate to OpenCode
+- `chorus-gemini` - Delegate to Gemini CLI
+- `chorus-codex` - Delegate to Codex
+- `chorus-kilo` - Delegate to Kilo Code CLI
+- `chorus-council` - LLM council with all five agents
+- `chorus-parallel-review` - Parallel code review
+- `chorus-parallel-debug` - Parallel root-cause hypotheses
+- `chorus-second-opinion` - Quick independent second opinion
+
+### Kilo
+
+```bash
+git clone https://github.com/valpere/chorus /tmp/chorus
+
+# Delegation skills
+mkdir -p ~/.kilo/skills/chorus-claude ~/.kilo/skills/chorus-opencode \
+         ~/.kilo/skills/chorus-gemini ~/.kilo/skills/chorus-codex ~/.kilo/skills/chorus-cursor
+cp /tmp/chorus/for-kilo/claude/SKILL.md ~/.kilo/skills/chorus-claude/
+cp /tmp/chorus/for-kilo/opencode/SKILL.md ~/.kilo/skills/chorus-opencode/
+cp /tmp/chorus/for-kilo/gemini/SKILL.md ~/.kilo/skills/chorus-gemini/
+cp /tmp/chorus/for-kilo/codex/SKILL.md ~/.kilo/skills/chorus-codex/
+cp /tmp/chorus/for-kilo/cursor/SKILL.md ~/.kilo/skills/chorus-cursor/
+
+# Workflow pattern skills
+mkdir -p ~/.kilo/skills/chorus-council ~/.kilo/skills/chorus-parallel-review \
+         ~/.kilo/skills/chorus-parallel-debug ~/.kilo/skills/chorus-second-opinion
+cp /tmp/chorus/for-kilo/council/SKILL.md ~/.kilo/skills/chorus-council/
+cp /tmp/chorus/for-kilo/parallel-review/SKILL.md ~/.kilo/skills/chorus-parallel-review/
+cp /tmp/chorus/for-kilo/parallel-debug/SKILL.md ~/.kilo/skills/chorus-parallel-debug/
+cp /tmp/chorus/for-kilo/second-opinion/SKILL.md ~/.kilo/skills/chorus-second-opinion/
+```
+
+Adds skills:
+- `chorus-claude` - Delegate to Claude Code
+- `chorus-opencode` - Delegate to OpenCode
+- `chorus-gemini` - Delegate to Gemini CLI
+- `chorus-codex` - Delegate to Codex
+- `chorus-cursor` - Delegate to Cursor Agent CLI
+- `chorus-council` - LLM council with all five agents
+- `chorus-parallel-review` - Parallel code review
+- `chorus-parallel-debug` - Parallel root-cause hypotheses
+- `chorus-second-opinion` - Quick independent second opinion
+
 ## Usage Examples
 
 ### Claude Code
@@ -161,6 +229,26 @@ Once skills are installed, Codex will activate them when you mention delegating:
 
 ```bash
 codex "Ask Gemini to analyze this file for performance issues"
+```
+
+### Cursor
+
+Once rules are installed in `.cursor/rules/`, Cursor will activate them based on context:
+
+```bash
+# In a Cursor Agent session:
+"Get a second opinion from Claude on this approach"
+"Run a parallel review with all agents"
+"Ask Kilo if this naming is clear enough"
+```
+
+### Kilo
+
+Once skills are installed, Kilo will activate them when you mention delegating:
+
+```bash
+kilo run --auto "Ask Gemini to review this for edge cases"
+kilo run --auto "Run a council on whether to use Redis or Postgres for this queue"
 ```
 
 ## Workflow Patterns
@@ -254,6 +342,26 @@ chorus/
 │   ├── gemini/SKILL.md
 │   ├── cursor/SKILL.md
 │   ├── kilo/SKILL.md
+│   ├── council/SKILL.md
+│   ├── parallel-review/SKILL.md
+│   ├── parallel-debug/SKILL.md
+│   └── second-opinion/SKILL.md
+├── for-cursor/                # Cursor Agent CLI rules
+│   ├── claude/RULE.mdc
+│   ├── opencode/RULE.mdc
+│   ├── gemini/RULE.mdc
+│   ├── codex/RULE.mdc
+│   ├── kilo/RULE.mdc
+│   ├── council/RULE.mdc
+│   ├── parallel-review/RULE.mdc
+│   ├── parallel-debug/RULE.mdc
+│   └── second-opinion/RULE.mdc
+├── for-kilo/                  # Kilo Code CLI skills
+│   ├── claude/SKILL.md
+│   ├── opencode/SKILL.md
+│   ├── gemini/SKILL.md
+│   ├── codex/SKILL.md
+│   ├── cursor/SKILL.md
 │   ├── council/SKILL.md
 │   ├── parallel-review/SKILL.md
 │   ├── parallel-debug/SKILL.md

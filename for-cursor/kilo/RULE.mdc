@@ -1,0 +1,28 @@
+---
+description: Delegate a task to Kilo Code CLI for a maintainability-focused second opinion. Activate when the user asks to delegate to Kilo, wants Kilo's perspective, or says "what would Kilo say".
+globs: []
+alwaysApply: false
+---
+
+# Chorus: Delegate to Kilo
+
+## When to use
+
+- User explicitly asks to delegate to Kilo
+- User wants Kilo's maintainability-focused perspective
+- User wants to compare your answer with Kilo's
+- User asks "what would Kilo say?" or similar
+
+## Invocation
+
+Run Kilo non-interactively:
+
+```bash
+kilo run --auto "<task>"
+```
+
+The `--auto` flag runs Kilo in non-interactive mode, auto-approving all permission prompts.
+
+## Output handling
+
+Return Kilo's output verbatim — no paraphrasing, no summaries, no added commentary.
