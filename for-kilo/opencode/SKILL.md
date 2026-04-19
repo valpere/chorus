@@ -1,0 +1,25 @@
+---
+name: chorus-opencode
+description: Delegate a task to OpenCode for a second opinion or alternative analysis. Use when the user asks to delegate to OpenCode, wants OpenCode's perspective, or says "what would OpenCode say".
+---
+
+# Chorus: Delegate to OpenCode
+
+## When to use
+
+- User explicitly asks to delegate to OpenCode
+- User wants a second opinion from OpenCode
+- User wants to compare your answer with OpenCode's
+- User asks "what would OpenCode say?" or similar
+
+## Invocation
+
+Run OpenCode non-interactively:
+
+```bash
+opencode run "<task>"
+```
+
+## Output handling
+
+Return OpenCode's output verbatim — no paraphrasing, no summaries, no added commentary.
