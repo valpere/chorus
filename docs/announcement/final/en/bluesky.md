@@ -1,5 +1,5 @@
 Post 1:
-Built `chorus` — open-source plugins that let AI coding CLIs delegate to each other. Claude, OpenCode, Gemini, Codex, Cursor, Kilo. Install once, use any agent from the tool you already like. Full 6×6 mesh. https://github.com/valpere/chorus
+Built `chorus` — open-source plugins that let AI coding CLIs delegate to each other. Claude Code, OpenCode, Gemini CLI, Codex, Cursor, Kilo. Install once, use any agent from the tool you already like. Full 6×6 mesh. https://github.com/valpere/chorus
 
 ---
 

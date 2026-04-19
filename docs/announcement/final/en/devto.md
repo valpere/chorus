@@ -82,7 +82,7 @@ OpenCode gets these as MCP tools (`council`, `parallel_review`, `parallel_debug`
 
 The important design constraint for `chorus` is that it does not try to become a new AI IDE or orchestration platform. It is glue.
 
-One install gives you access to the other agents from your preferred tool. Claude Code gets slash commands. OpenCode gets MCP tools. Gemini CLI, Codex, Cursor, and Kilo get skills or rules.
+One install gives you access to the other agents from your preferred tool. Claude Code gets slash commands. OpenCode gets MCP tools. Gemini CLI, Codex, Cursor, and Kilo get skills/rules.
 
 Keep using the interface you already like, but stop treating each CLI as an isolated island.
 

@@ -4,7 +4,7 @@ Post 1:
 ---
 
 Post 2:
-Найкорисніше — 5-агентна рада. Claude (Correctness), Gemini (Edge Cases), Codex (Scope), Cursor (Integration), Kilo (Maintainability). Жоден не є "істиною". Цінність у тому, що помиляються вони по-різному і покривають більше. OpenCode — хост, але не учасник: TUI stdout не захопити.
+Найкорисніше — 5-агентна рада. Claude Code (Correctness), Gemini CLI (Edge Cases), Codex (Scope), Cursor (Integration), Kilo (Maintainability). Жоден не є "істиною". Цінність у тому, що помиляються вони по-різному і покривають більше. OpenCode — хост, але не учасник: TUI stdout не захопити.
 
 ---
 
