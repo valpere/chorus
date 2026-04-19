@@ -1,6 +1,6 @@
 ---
 description: Quick independent second opinion from one agent on a decision or approach. Activate when the user says "second opinion", "sanity check", "quick check", or "what does X think about this".
-globs:
+globs: []
 alwaysApply: false
 ---
 

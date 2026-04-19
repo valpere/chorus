@@ -14,12 +14,12 @@ description: Delegate a task to OpenCode for a second opinion or alternative ana
 
 ## Invocation
 
-Run OpenCode non-interactively:
-
 ```bash
 opencode run "<task>"
 ```
 
+> **Note:** `opencode run` is a TUI — it writes output to the terminal but does not expose stdout for programmatic capture. OpenCode will open in your terminal; read the output there. If you need capturable output, use another agent (e.g., Claude) as a proxy instead.
+
 ## Output handling
 
-Return OpenCode's output verbatim — no paraphrasing, no summaries, no added commentary.
+OpenCode output is visible in the terminal only. Read it there and summarize or relay relevant findings to the user.

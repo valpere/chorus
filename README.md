@@ -6,7 +6,7 @@ Cross-agent plugin collection for AI coding CLIs. Delegate tasks between Claude 
 
 ## Overview
 
-Chorus connects six AI coding agents through a full delegation mesh. Every agent can delegate to every other agent.
+Chorus connects six AI coding agents through a full delegation mesh. Every agent can delegate to every other agent (see [Known Limitations](#known-limitations) for OpenCode output capture constraints).
 
 | From \ To | Claude | OpenCode | Gemini | Codex | Cursor | Kilo |
 |-----------|--------|----------|--------|-------|--------|------|
@@ -122,6 +122,8 @@ Adds skills:
 
 ```bash
 git clone https://github.com/valpere/chorus /tmp/chorus
+
+mkdir -p .cursor/rules
 
 # Delegation rules
 cp /tmp/chorus/for-cursor/claude/RULE.mdc .cursor/rules/chorus-claude.mdc

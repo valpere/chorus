@@ -1,6 +1,6 @@
 ---
 description: Run an LLM council — four agents tackle the same task with different roles and you synthesize as chairman. Activate when the user says "council", "multiple opinions", "ask all agents", "LLM council", or "multi-agent review".
-globs:
+globs: []
 alwaysApply: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Parallel root-cause hypotheses from multiple agents for a reported bug. Activate when the user says "parallel debug", "chorus debug", "multiple hypotheses", "debug with all agents", or describes a bug symptom and wants multiple perspectives.
-globs:
+globs: []
 alwaysApply: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Delegate a task to Kilo Code CLI for a maintainability-focused second opinion. Activate when the user asks to delegate to Kilo, wants Kilo's perspective, or says "what would Kilo say".
-globs:
+globs: []
 alwaysApply: false
 ---
 

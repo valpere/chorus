@@ -1,6 +1,6 @@
 ---
 description: Parallel code review of the current git diff from multiple agents. Activate when the user says "parallel review", "review with all agents", "chorus review", or "review from multiple angles".
-globs:
+globs: []
 alwaysApply: false
 ---
 
