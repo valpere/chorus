@@ -76,7 +76,7 @@ const TOOLS = [
   },
   {
     name: 'council',
-    description: 'Run an LLM council: Claude (correctness), Gemini (edge cases), Codex (scope) each tackle the same task in parallel. Returns delimited output — the host agent synthesizes.',
+    description: 'Run an LLM council: Claude (correctness), Gemini (edge cases), Codex (scope), Cursor (integration), Kilo (maintainability) tackle the same task in parallel. Returns delimited output — the host agent synthesizes.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -90,7 +90,7 @@ const TOOLS = [
   },
   {
     name: 'parallel_review',
-    description: 'Parallel code review of the current git diff: Claude reviews for correctness/security, Gemini for edge cases, Codex for scope/simplicity. Returns delimited output — the host agent synthesizes.',
+    description: 'Parallel code review of the current git diff: Claude (correctness/security), Gemini (edge cases), Codex (scope/simplicity), Cursor (integration), Kilo (maintainability). Returns delimited output — the host agent synthesizes.',
     inputSchema: {
       type: 'object',
       properties: {}
@@ -98,7 +98,7 @@ const TOOLS = [
   },
   {
     name: 'parallel_debug',
-    description: 'Parallel root-cause hypotheses from three agents for a given symptom. Returns ranked hypotheses per agent — the host synthesizes an investigation plan.',
+    description: 'Parallel root-cause hypotheses from five agents for a given symptom. Returns ranked hypotheses per agent — the host synthesizes an investigation plan.',
     inputSchema: {
       type: 'object',
       properties: {

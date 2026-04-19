@@ -2,7 +2,7 @@
 
 Cross-agent plugin collection for AI coding CLIs. Delegate tasks between Claude Code, OpenCode, Gemini CLI, Codex, Cursor, and Kilo.
 
-![chorus delegation mesh](docs/infographic.png)
+![chorus delegation mesh](docs/announcement/infographic.png)
 
 ## Overview
 
