@@ -25,6 +25,8 @@ metadata:
 |-------|-------|
 | Claude | Application logic, state management, data flow |
 | Codex | Edge cases in input handling, type coercion, off-by-one errors |
+| Cursor | Framework, library, and third-party integration issues |
+| Kilo | Naming confusion, type misuse, readability issues that hide bugs |
 | (you) | Infrastructure, concurrency, external dependencies, environment |
 
 ## Invocation
@@ -38,8 +40,13 @@ CLAUDE_PID=$!
 codex exec "A software bug has been reported. Generate a ranked list of hypotheses for the root cause. Focus area: edge cases in input handling, type coercion, off-by-one errors. Format: numbered list, most likely first.\n\nSymptom: $SYMPTOM" &
 CODEX_PID=$!
 
-wait $CLAUDE_PID
-wait $CODEX_PID
+agent -p --force "A software bug has been reported. Generate a ranked list of hypotheses for the root cause. Focus area: framework, library, and third-party integration issues. Format: numbered list, most likely first.\n\nSymptom: $SYMPTOM" &
+CURSOR_PID=$!
+
+kilo run --auto "A software bug has been reported. Generate a ranked list of hypotheses for the root cause. Focus area: naming confusion, type misuse, readability issues that hide bugs. Format: numbered list, most likely first.\n\nSymptom: $SYMPTOM" &
+KILO_PID=$!
+
+wait $CLAUDE_PID $CODEX_PID $CURSOR_PID $KILO_PID
 ```
 
 Your own hypotheses (Gemini) cover **infrastructure and environment**. Produce them alongside the collected results.

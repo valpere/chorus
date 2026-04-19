@@ -1,6 +1,6 @@
 ---
 name: chorus-parallel-review
-description: Parallel code review of the current git diff from multiple agents — Claude (correctness/security), Gemini (edge cases), and you (scope/simplicity). Use when the user says "parallel review", "review with all agents", or "chorus review".
+description: Parallel code review of the current git diff from multiple agents — Claude (correctness/security), Gemini (edge cases), Cursor (integration), Kilo (maintainability), and you (scope/simplicity). Use when the user says "parallel review", "review with all agents", or "chorus review".
 ---
 
 # Chorus: Parallel Code Review
@@ -20,13 +20,23 @@ You review for **SCOPE AND SIMPLICITY**: unnecessary complexity, changes exceedi
 git diff HEAD > /tmp/chorus_diff.txt
 
 claude --print "Review for CORRECTNESS AND SECURITY. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" --dangerously-skip-permissions &
+CLAUDE_PID=$!
+
 gemini --prompt "Review for EDGE CASES AND ROBUSTNESS. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" --yolo --output-format text &
-wait
+GEMINI_PID=$!
+
+agent -p --force "Review for CODEBASE INTEGRATION. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" &
+CURSOR_PID=$!
+
+kilo run --auto "Review for MAINTAINABILITY. Numbered findings.\n\n$(cat /tmp/chorus_diff.txt)" &
+KILO_PID=$!
+
+wait $CLAUDE_PID $GEMINI_PID $CURSOR_PID $KILO_PID
 ```
 
 ## Output handling
 
-Synthesize all three reviews:
+Synthesize all five reviews (four agents + your scope review):
 
 ```
 ## Parallel Review Summary
@@ -38,4 +48,4 @@ Review-only — do not apply patches.
 
 ## Known limitation
 
-Codex sandbox limits file access to the current working directory. Reviews of files outside this scope will be incomplete.
+Codex sandbox limits access to the current working directory. Reviews of files outside this scope will be incomplete.

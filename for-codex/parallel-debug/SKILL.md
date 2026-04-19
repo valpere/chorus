@@ -20,13 +20,23 @@ You generate hypotheses focused on **edge cases in input handling, type coercion
 SYMPTOM="<symptom>"
 
 claude --print "Root-cause hypotheses, ranked by likelihood (numbered list). Focus: application logic, state management.\n\nSymptom: $SYMPTOM" --dangerously-skip-permissions &
+CLAUDE_PID=$!
+
 gemini --prompt "Root-cause hypotheses, ranked by likelihood (numbered list). Focus: infrastructure, concurrency, environment.\n\nSymptom: $SYMPTOM" --yolo --output-format text &
-wait
+GEMINI_PID=$!
+
+agent -p --force "Root-cause hypotheses, ranked by likelihood (numbered list). Focus: framework, library, and third-party integration issues.\n\nSymptom: $SYMPTOM" &
+CURSOR_PID=$!
+
+kilo run --auto "Root-cause hypotheses, ranked by likelihood (numbered list). Focus: naming confusion, type misuse, readability issues that hide bugs.\n\nSymptom: $SYMPTOM" &
+KILO_PID=$!
+
+wait $CLAUDE_PID $GEMINI_PID $CURSOR_PID $KILO_PID
 ```
 
 ## Output handling
 
-Merge all three hypothesis lists, prioritize ones flagged by multiple agents:
+Merge all five hypothesis lists (four agents + your edge-case hypotheses), prioritize ones flagged by multiple agents:
 
 ```
 ## Hypothesis Pool (ranked)

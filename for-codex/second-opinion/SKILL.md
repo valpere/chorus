@@ -8,16 +8,22 @@ description: Quick independent second opinion from one agent on a decision or ap
 ## When to use
 
 - Quick sanity check on a decision or approach
-- User says "second opinion", "sanity check", "what does Claude/Gemini think"
+- User says "second opinion", "sanity check", "what does Claude/Gemini/Cursor/Kilo think"
 
 ## Invocation
 
 ```bash
-# Ask Claude (depth — correctness, edge cases)
+# Ask Claude (default — depth, correctness, edge cases)
 claude --print "Give a concise second opinion. Be direct: agree / concerns / verdict (approve / approve-with-caveats / reject).\n\n<approach>" --dangerously-skip-permissions
 
 # Or ask Gemini (breadth — alternatives, long-context)
 gemini --prompt "Give a concise second opinion. Be direct: agree / concerns / verdict (approve / approve-with-caveats / reject).\n\n<approach>" --yolo --output-format text
+
+# Or ask Cursor (integration — does this fit the codebase?)
+agent -p --force "Give a concise second opinion. Be direct: agree / concerns / verdict (approve / approve-with-caveats / reject).\n\n<approach>"
+
+# Or ask Kilo (maintainability — naming, readability, long-term impact)
+kilo run --auto "Give a concise second opinion. Be direct: agree / concerns / verdict (approve / approve-with-caveats / reject).\n\n<approach>"
 ```
 
 ## Output handling
