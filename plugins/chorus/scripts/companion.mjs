@@ -26,7 +26,7 @@ function runAgent(name, binary, args) {
   return new Promise(resolve => {
     const out = [];
     const err = [];
-    const proc = spawn(binary, args, { stdio: ['pipe', 'pipe', 'pipe'] });
+    const proc = spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     proc.stdout.on('data', d => out.push(d));
     proc.stderr.on('data', d => err.push(d));
     proc.on('close', code => resolve({

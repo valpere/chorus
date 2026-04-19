@@ -14,13 +14,13 @@ So I built `chorus`.
 
 ---
 
-`chorus` is an open-source cross-agent plugin collection for four AI coding CLIs: Claude Code, OpenCode, Gemini CLI, and Codex.
+`chorus` is an open-source cross-agent plugin collection for six AI coding CLIs: Claude Code, OpenCode, Gemini CLI, Codex, Cursor, and Kilo.
 
 The goal is not to replace any of them. I like that these tools have different interfaces and different tradeoffs. The goal is to connect them.
 
-One install. Four AI agents available from your preferred tool.
+One install. Six AI agents available from your preferred tool.
 
-The mental model is a **4×3 mesh**: each of the four agents can delegate tasks to the other three.
+The mental model is a **6×6 mesh**: every agent can delegate tasks to every other agent.
 
 If you are in Claude Code, you can run:
 
@@ -28,6 +28,8 @@ If you are in Claude Code, you can run:
 /opencode:run Try a simpler implementation of this change.
 /gemini:review Review the diff for missed edge cases.
 /codex:run Add focused regression tests for the new behavior.
+/cursor:run Check if this fits the existing patterns.
+/kilo:run Review the naming and long-term readability.
 ```
 
 If you are in OpenCode, you get MCP tools:
@@ -36,9 +38,11 @@ If you are in OpenCode, you get MCP tools:
 delegate_claude
 delegate_gemini
 delegate_codex
+delegate_cursor
+delegate_kilo
 ```
 
-Gemini CLI and Codex are supported through skills.
+Gemini CLI, Codex, Cursor, and Kilo are supported through skills and rules.
 
 ---
 
@@ -52,7 +56,7 @@ I am not trying to automate judgment away. I am trying to make it easier to gath
 
 AI coding agents are very good at sounding confident. They are also very good at missing things. But they do not all miss the same things. That is the practical advantage.
 
-Sometimes Gemini catches a weird edge case. Sometimes Codex gives a better test plan. Sometimes Claude explains why a refactor is too clever. Sometimes OpenCode suggests the boring solution — which is usually the right one.
+Sometimes Gemini catches a weird edge case. Sometimes Codex gives a better test plan. Sometimes Claude explains why a refactor is too clever. Sometimes Cursor notices that this pattern doesn't fit the rest of the codebase. Sometimes Kilo flags a naming choice that will confuse the next maintainer.
 
 The value is not that any one agent is "the best". The value is that switching between them should be cheap.
 
@@ -61,13 +65,15 @@ The value is not that any one agent is "the best". The value is that switching b
 chorus now also ships named workflow pattern commands as first-class plugins. The multi-agent review I described above — `/gemini:review`, `/codex:run`, `/opencode:run` — is still there, but there is now a shorter path:
 
 ```text
-/chorus:review        — parallel review of git diff HEAD, one command, 3 independent opinions
-/chorus:council       — same task to all 3 agents with different roles; host synthesizes
-/chorus:debug         — ranked root-cause hypotheses from 3 agents for a bug symptom
+/chorus:review        — parallel review of git diff HEAD, one command, 5 independent opinions
+/chorus:council       — same task to all 5 agents with different roles; host synthesizes
+/chorus:debug         — ranked root-cause hypotheses from 5 agents for a bug symptom
 /chorus:second-opinion — quick check from one chosen agent
 ```
 
-OpenCode gets these as MCP tools. Gemini CLI and Codex get them as skills. The idea is the same: you should not have to remember which three delegate commands to wire together every time you want a parallel review. One command, same result.
+Five agents run in parallel (Claude, Gemini, Codex, Cursor, Kilo). OpenCode is mesh-connected but excluded from these patterns — its TUI stdout isn't capturable programmatically.
+
+OpenCode gets these as MCP tools. Gemini CLI, Codex, Cursor, and Kilo get them as skills/rules. The idea is the same: you should not have to remember which five delegate commands to wire together every time you want a parallel review. One command, same result.
 
 That is the design philosophy behind `chorus`: no new giant dashboard, no new workflow religion, no forced orchestration layer. Just commands and tools that let the AI coding CLIs talk to each other.
 
@@ -76,11 +82,10 @@ I built it as a working developer, not as a product campaign. My use case is sim
 The project is open source:
 **https://github.com/valpere/chorus**
 
-If you already use Claude Code, OpenCode, Gemini CLI, or Codex — `chorus` may fit into your workflow without asking you to change the workflow itself.
+If you already use Claude Code, OpenCode, Gemini CLI, Codex, Cursor, or Kilo — `chorus` may fit into your workflow without asking you to change the workflow itself.
 
 That is the whole point.
 
 ---
 
 *Valentyn Solomko — Ukrainian software engineer*
-
