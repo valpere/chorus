@@ -26,6 +26,8 @@ agent -p --force "Give a concise second opinion. Be direct: agree / concerns / v
 kilo run --auto "Give a concise second opinion. Be direct: agree / concerns / verdict (approve / approve-with-caveats / reject).\n\n<approach>"
 ```
 
+**Graceful degradation:** If the requested agent is not installed (`command -v <binary>` fails), fall back to the next available one and tell the user which agent you used instead.
+
 ## Output handling
 
 Return the agent's output verbatim — no additional commentary needed. The agent's verdict is self-contained.

@@ -34,9 +34,11 @@ KILO_PID=$!
 wait $CLAUDE_PID $GEMINI_PID $CURSOR_PID $KILO_PID
 ```
 
+**Graceful degradation:** Check each agent with `command -v <binary>` before spawning. Skip missing agents and warn the user. Proceed as long as at least 2 agents (including yourself) are available.
+
 ## Output handling
 
-Synthesize all five reviews (four agents + your scope review):
+Synthesize all available reviews (up to four agents + your scope review):
 
 ```
 ## Parallel Review Summary

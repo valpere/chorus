@@ -53,6 +53,8 @@ wait $CLAUDE_PID $CODEX_PID $CURSOR_PID $KILO_PID
 
 Your own review (Gemini) covers **edge cases and robustness**. Produce it alongside the collected results.
 
+**Graceful degradation:** Check each agent with `command -v <binary>` before spawning. Skip missing agents and warn the user. Proceed as long as at least 2 agents (including yourself) are available.
+
 ## Output handling
 
 Synthesize all five reviews into a unified report:

@@ -53,9 +53,11 @@ wait $CLAUDE_PID $CODEX_PID $CURSOR_PID $KILO_PID
 
 Your own response (Gemini) serves as the **edge-cases** perspective. Run it after collecting the others.
 
+**Graceful degradation:** Check each agent with `command -v <binary>` before spawning. Skip missing agents and warn the user. Proceed as long as at least 2 agents (including yourself) are available.
+
 ## Output handling
 
-After all five outputs are collected, synthesize as chairman:
+After all five outputs are collected (fewer if some agents were skipped), synthesize as chairman:
 
 1. **Consensus** — points all agents agree on
 2. **Disagreements** — flag and adjudicate
