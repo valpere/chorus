@@ -1,11 +1,11 @@
 ---
-description: Parallel code review from all three agents on the current git diff
+description: Parallel code review from all five agents on the current git diff
 argument-hint: "[--wait|--background]"
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git:*)
 ---
 
-Run a parallel code review across three agents and synthesize the findings.
+Run a parallel code review across five agents and synthesize the findings.
 
 Raw slash-command arguments:
 `$ARGUMENTS`
@@ -14,6 +14,8 @@ Raw slash-command arguments:
 - Claude — correctness and security (bugs, vulnerabilities, unsafe patterns)
 - Gemini — edge cases and robustness (missing error handling, race conditions)
 - Codex — scope and simplicity (unnecessary complexity, simpler alternatives)
+- Cursor — codebase integration (consistency with existing patterns, dependency risks)
+- Kilo — maintainability (readability, naming clarity, long-term tech debt)
 
 Each agent reviews the current `git diff HEAD`.
 
@@ -51,9 +53,9 @@ Bash({
 - …
 
 **Individual findings:**
-| Finding | Claude | Gemini | Codex |
-|---------|--------|--------|-------|
-| …       | ✓      |        | ✓     |
+| Finding | Claude | Gemini | Codex | Cursor | Kilo |
+|---------|--------|--------|-------|--------|------|
+| …       | ✓      |        | ✓     |        |      |
 
 ## Verdict
 

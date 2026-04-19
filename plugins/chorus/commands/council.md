@@ -1,5 +1,5 @@
 ---
-description: Run an LLM council — three agents tackle the same task with different roles, then synthesize
+description: Run an LLM council — five agents tackle the same task with different roles, then synthesize
 argument-hint: "[--wait|--background] <task or question>"
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git:*)
@@ -14,6 +14,8 @@ Raw slash-command arguments:
 - Claude — correctness reviewer (logic, security, type safety)
 - Gemini — edge-cases reviewer (failure modes, alternatives, what was missed)
 - Codex — scope reviewer (unnecessary complexity, smallest viable solution)
+- Cursor — integration reviewer (codebase fit, dependency implications)
+- Kilo — maintainability reviewer (readability, naming, long-term tech debt)
 
 **Execution mode:**
 - Default: foreground (council output needs immediate synthesis).
@@ -43,13 +45,13 @@ Bash({
 
 **After the companion exits, synthesize as chairman:**
 
-The companion output contains three delimited sections — one per agent.
+The companion output contains five delimited sections — one per agent.
 Read each section and produce a structured synthesis:
 
 ```
 ## Council Synthesis
 
-**Consensus** (all 3 agree):
+**Consensus** (flagged by multiple agents):
 - …
 
 **Disagreements:**

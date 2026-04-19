@@ -1,11 +1,11 @@
 ---
-description: Parallel debugging — three agents propose root-cause hypotheses for a symptom
+description: Parallel debugging — five agents propose root-cause hypotheses for a symptom
 argument-hint: "[--wait|--background] <symptom description>"
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git:*)
 ---
 
-Generate parallel root-cause hypotheses from three agents and synthesize a ranked investigation plan.
+Generate parallel root-cause hypotheses from five agents and synthesize a ranked investigation plan.
 
 Raw slash-command arguments:
 `$ARGUMENTS`
@@ -14,6 +14,8 @@ Raw slash-command arguments:
 - Claude — application logic, state management, data flow
 - Gemini — infrastructure, concurrency, external dependencies, environment
 - Codex — edge cases in input handling, type coercion, off-by-one errors
+- Cursor — framework, library, and third-party integration issues
+- Kilo — naming, types, readability, and long-term maintainability
 
 **Execution mode:**
 - Default: foreground (debugging needs immediate results).
