@@ -44,9 +44,11 @@ KILO_PID=$!
 wait $CLAUDE_PID $GEMINI_PID $CURSOR_PID $KILO_PID
 ```
 
+**Graceful degradation:** Check each agent with `command -v <binary>` before spawning. Skip missing agents and warn the user. Proceed as long as at least 2 agents (including yourself) are available.
+
 ## Output handling
 
-After collecting all four outputs plus your own scope review, synthesize as chairman:
+After collecting outputs (fewer if some agents were skipped) plus your own scope review, synthesize as chairman:
 
 1. **Consensus** — points all agents agree on
 2. **Disagreements** — flag and adjudicate

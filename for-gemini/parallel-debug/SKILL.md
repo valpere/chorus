@@ -51,6 +51,8 @@ wait $CLAUDE_PID $CODEX_PID $CURSOR_PID $KILO_PID
 
 Your own hypotheses (Gemini) cover **infrastructure and environment**. Produce them alongside the collected results.
 
+**Graceful degradation:** Check each agent with `command -v <binary>` before spawning. Skip missing agents and warn the user. Proceed as long as at least 2 agents (including yourself) are available.
+
 ## Output handling
 
 Synthesize into a prioritized investigation plan:

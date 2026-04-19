@@ -34,9 +34,11 @@ CURSOR_PID=$!
 wait $CLAUDE_PID $GEMINI_PID $CODEX_PID $CURSOR_PID
 ```
 
+**Graceful degradation:** Check each agent with `command -v <binary>` before spawning. Skip missing agents and warn the user. Proceed as long as at least 2 agents (including yourself) are available.
+
 ## Output handling
 
-Synthesize all five reviews (four agents + your maintainability review):
+Synthesize all available reviews (up to four agents + your maintainability review):
 
 ```
 ## Parallel Review Summary

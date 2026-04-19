@@ -25,10 +25,7 @@ Each agent reviews the current `git diff HEAD`.
 - Strip `--background` and `--wait` before passing to companion.
 
 **Pre-flight:**
-```bash
-node "$CLAUDE_PLUGIN_ROOT/scripts/companion.mjs" check-all
-```
-If non-zero, stop and tell the user which agents are missing.
+The companion automatically checks which agents are installed. Missing agents are reported in stdout with install instructions. The review proceeds with whatever agents are available — at least 2 are required; if fewer are installed the companion exits non-zero and you should tell the user to install more agents.
 
 **Foreground execution:**
 ```bash
@@ -52,10 +49,10 @@ Bash({
 **Critical findings** (flagged by 2+ agents):
 - …
 
-**Individual findings:**
-| Finding | Claude | Gemini | Codex | Cursor | Kilo |
-|---------|--------|--------|-------|--------|------|
-| …       | ✓      |        | ✓     |        |      |
+**Individual findings** (columns = available agents):
+| Finding | Agent 1 | Agent 2 | … |
+|---------|---------|---------|---|
+| …       | ✓       |         |   |
 
 ## Verdict
 
