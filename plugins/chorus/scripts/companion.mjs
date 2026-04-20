@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 // ── agent registry ────────────────────────────────────────────────────────────
 
@@ -64,11 +65,11 @@ export function runAgent(name, binary, args) {
     const proc = spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     proc.stdout.on('data', d => out.push(d));
     proc.stderr.on('data', d => err.push(d));
-    proc.on('close', code => resolve({
+    proc.on('close', (code, signal) => resolve({
       name,
       output: Buffer.concat(out).toString().trim(),
       error:  Buffer.concat(err).toString().trim(),
-      code:   code ?? 0
+      code:   code ?? (signal ? 1 : 0)
     }));
     proc.on('error', e => resolve({ name, output: '', error: e.message, code: 1 }));
   });
@@ -113,7 +114,7 @@ export function requireAvailable(agents, min = 2) {
 // ── CLI entry point ───────────────────────────────────────────────────────────
 // Guard lets tests import helpers above without triggering the CLI dispatcher.
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const [,, cmd, ...rest] = process.argv;
 
   // ── check-all ───────────────────────────────────────────────────────────────

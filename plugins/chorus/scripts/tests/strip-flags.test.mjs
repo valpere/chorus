@@ -37,8 +37,8 @@ test('handles empty array', () => {
   assert.deepEqual(stripFlags([]), []);
 });
 
-test('does not consume positional arg after --agent that starts with --', () => {
-  // --agent followed by another flag: the next-arg guard checks !startsWith('--')
+test('strips --agent by consuming the next token even when it is another flag', () => {
+  // stripFlags always consumes the token after --agent unconditionally
   assert.deepEqual(
     stripFlags(['--agent', '--json', 'task']),
     ['task']

@@ -1,9 +1,6 @@
 ---
 name: chorus-vote
-description: >
-  Put a yes/no proposition to five agents and tally YES / NO / ABSTAIN votes.
-  Use when the user says "vote on", "should we", "poll the agents", "take a vote",
-  or wants a decision signal rather than a council discussion.
+description: Put a yes/no proposition to five agents and tally YES / NO / ABSTAIN votes when the user wants a quick decision signal.
 ---
 
 # Chorus: Parallel Vote
@@ -71,7 +68,11 @@ YES|NO|ABSTAIN — one sentence rationale from scope perspective.
 **(you):** YES — ...
 ```
 
-Do not synthesize or adjudicate unless the user asks.
+## Output handling
+
+Return the vote tally and per-agent rationales in the format above verbatim.
+
+Do not synthesize, reconcile, or adjudicate the votes unless the user explicitly asks for analysis or a recommendation.
 
 ## Known limitation
 

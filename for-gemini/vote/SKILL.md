@@ -77,4 +77,8 @@ Present a tally table followed by per-agent rationale:
 **(you):** YES — ...
 ```
 
-Do not synthesize or adjudicate unless the user asks — the tally speaks for itself.
+## Output handling
+
+Return the vote tally and per-agent rationales in the format above verbatim.
+
+Do not synthesize, reconcile, or adjudicate the votes unless the user explicitly asks for analysis or a recommendation.
