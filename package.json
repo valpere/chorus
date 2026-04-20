@@ -1,7 +1,7 @@
 {
   "name": "chorus",
   "version": "1.0.0",
-  "description": "Claude Code plugins for AI coding agents: OpenCode, Gemini, Claude",
+  "description": "Claude Code plugins for AI coding agents: OpenCode, Gemini, Claude, Codex, Cursor, Kilo",
   "type": "module",
   "engines": { "node": ">=18.18.0" }
 }

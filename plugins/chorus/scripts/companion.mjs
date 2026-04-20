@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from 'child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 const [,, cmd, ...rest] = process.argv;
 
@@ -33,15 +33,15 @@ function filterAvailable(agents) {
   return { available, missing };
 }
 
-/** Print a warning block for skipped agents (goes to stdout so Claude reads it). */
+/** Print a warning block for skipped agents. Always goes to stderr so JSON stdout stays clean. */
 function printMissingWarning(missing) {
   if (missing.length === 0) return;
-  console.log(`\n⚠ Skipped agents:`);
+  console.error(`\n⚠ Skipped agents:`);
   for (const a of missing) {
     if (a.reason === 'not-installed') {
-      console.log(`  ✗ ${a.name} — not installed. Run: ${REGISTRY[a.name]?.setup ?? `/${a.name}:setup`}`);
+      console.error(`  ✗ ${a.name} — not installed. Run: ${REGISTRY[a.name]?.setup ?? `/${a.name}:setup`}`);
     } else {
-      console.log(`  ✗ ${a.name} — unavailable (failed --version check). Check your installation.`);
+      console.error(`  ✗ ${a.name} — unavailable (failed --version check). Check your installation.`);
     }
   }
 }
@@ -51,7 +51,7 @@ function stripFlags(args) {
   let skipNext = false;
   for (const a of args) {
     if (skipNext) { skipNext = false; continue; }
-    if (a === '--background' || a === '--wait') continue;
+    if (a === '--background' || a === '--wait' || a === '--json') continue;
     if (a === '--agent') { skipNext = true; continue; }
     if (a.startsWith('--agent=')) continue;
     result.push(a);
@@ -91,6 +91,13 @@ function printDelimited(results) {
   console.log(`\n${'═'.repeat(60)}`);
 }
 
+function printJSON(command, results) {
+  console.log(JSON.stringify({
+    command,
+    results: results.map(r => ({ name: r.name, output: r.output, error: r.error, exitCode: r.code }))
+  }));
+}
+
 /** Check availability, warn about missing, abort if fewer than `min` available. */
 function requireAvailable(agents, min = 2) {
   const { available, missing } = filterAvailable(agents);
@@ -127,6 +134,7 @@ if (cmd === 'check-all') {
 // ── council ───────────────────────────────────────────────────────────────────
 
 if (cmd === 'council') {
+  const jsonMode = rest.includes('--json');
   const task = stripFlags(rest).join(' ').trim();
   if (!task) { console.error('Usage: companion.mjs council <task>'); process.exit(1); }
 
@@ -172,12 +180,13 @@ if (cmd === 'council') {
 
   const available = requireAvailable(agents, 2);
   const results = await Promise.all(available.map(a => runAgent(a.name, a.binary, a.args)));
-  printDelimited(results);
+  jsonMode ? printJSON('council', results) : printDelimited(results);
 }
 
 // ── review ────────────────────────────────────────────────────────────────────
 
 if (cmd === 'review') {
+  const jsonMode = rest.includes('--json');
   const gitResult = spawnSync('git', ['diff', 'HEAD'], { encoding: 'utf8' });
   if (gitResult.error || gitResult.status !== 0) {
     const msg = gitResult.stderr?.trim() || gitResult.error?.message || `exit ${gitResult.status}`;
@@ -228,12 +237,13 @@ if (cmd === 'review') {
 
   const available = requireAvailable(agents, 2);
   const results = await Promise.all(available.map(a => runAgent(a.name, a.binary, a.args)));
-  printDelimited(results);
+  jsonMode ? printJSON('review', results) : printDelimited(results);
 }
 
 // ── debug ─────────────────────────────────────────────────────────────────────
 
 if (cmd === 'debug') {
+  const jsonMode = rest.includes('--json');
   const symptom = stripFlags(rest).join(' ').trim();
   if (!symptom) { console.error('Usage: companion.mjs debug <symptom>'); process.exit(1); }
 
@@ -258,12 +268,13 @@ if (cmd === 'debug') {
 
   const available = requireAvailable(agents, 2);
   const results = await Promise.all(available.map(a => runAgent(a.name, a.binary, a.args)));
-  printDelimited(results);
+  jsonMode ? printJSON('debug', results) : printDelimited(results);
 }
 
 // ── second-opinion ────────────────────────────────────────────────────────────
 
 if (cmd === 'second-opinion') {
+  const jsonMode = rest.includes('--json');
   const agentEqualsFlag = rest.find(a => a.startsWith('--agent='))?.split('=')[1];
   const agentIndex = rest.indexOf('--agent');
   const agentNextValue = agentIndex !== -1 && rest[agentIndex + 1] && !rest[agentIndex + 1].startsWith('--')
@@ -308,19 +319,23 @@ if (cmd === 'second-opinion') {
       process.exit(1);
     }
 
-    console.log(`⚠ Agent "${chosenAgent}" not found — using "${fallback}" instead.`);
+    console.error(`⚠ Agent "${chosenAgent}" not found — using "${fallback}" instead.`);
     if (requestedAgent) {
-      console.log(`  Install ${chosenAgent}: ${REGISTRY[chosenAgent].setup}`);
+      console.error(`  Install ${chosenAgent}: ${REGISTRY[chosenAgent].setup}`);
     }
     chosenAgent = fallback;
   }
 
   const result = await agentDefs[chosenAgent].run();
-  console.log(`\n${'═'.repeat(60)}`);
-  console.log(`SECOND OPINION: ${result.name.toUpperCase()}`);
-  console.log('═'.repeat(60));
-  console.log(result.output || result.error || '[no output]');
-  console.log(`\n${'═'.repeat(60)}`);
+  if (jsonMode) {
+    printJSON('second-opinion', [result]);
+  } else {
+    console.log(`\n${'═'.repeat(60)}`);
+    console.log(`SECOND OPINION: ${result.name.toUpperCase()}`);
+    console.log('═'.repeat(60));
+    console.log(result.output || result.error || '[no output]');
+    console.log(`\n${'═'.repeat(60)}`);
+  }
 }
 
 const known = ['check-all', 'council', 'review', 'debug', 'second-opinion'];
