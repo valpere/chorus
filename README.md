@@ -253,11 +253,13 @@ kilo run --auto "Run a council on whether to use Redis or Postgres for this queu
 
 ## Workflow Patterns
 
-Workflow patterns orchestrate **multiple agents in parallel** and synthesize the results. Install the `chorus` plugin once to access all four.
+Chorus ships four workflow pattern commands. The multi-agent workflows (`/chorus:council`, `/chorus:review`, `/chorus:debug`) orchestrate **multiple agents in parallel** and synthesize the results; `/chorus:second-opinion` runs with a single agent and falls back automatically if the requested agent is unavailable. Install the `chorus` plugin once to access all four.
+
+**Graceful degradation:** All workflows check agent availability at runtime. Missing agents are reported in the output with install instructions. For `council`, `review`, and `debug`, the command proceeds with the available subset — a minimum of 2 agents is required. `/chorus:second-opinion` requires only 1 available agent.
 
 ### LLM Council
 
-Three agents tackle the same task with different roles; the host synthesizes as chairman.
+Five agents tackle the same task with different roles; the host synthesizes as chairman.
 
 ```bash
 /chorus:council "Should we use optimistic locking or a distributed lock for this feature?"
@@ -311,6 +313,8 @@ All `run` and `review` commands support two execution modes:
 - [Codex](https://github.com/openai/codex) (for delegation to/from Codex)
 - [Cursor Agent CLI](https://cursor.com/docs/cli) (`agent` binary, optional — for Cursor delegation)
 - [Kilo Code CLI](https://kilo.ai/docs/cli) (`kilo` binary, optional — for Kilo delegation)
+
+Not all agents need to be installed. `/chorus:second-opinion` works with at least 1 available agent; the other multi-agent workflows (`council`, `review`, `debug`) require at least 2.
 
 ## Project Structure
 
