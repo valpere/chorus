@@ -39,7 +39,8 @@ Each `for-*/` directory has 10 entries: 5 delegation targets + council + paralle
 | File | Purpose |
 |------|---------|
 | `plugins/chorus/scripts/companion.mjs` | Core orchestrator. Runs `council`, `review`, `debug`, `second-opinion`, `vote` subcommands. Exports helpers for tests. `council`/`review`/`debug`/`vote` require ≥2 agents; `second-opinion` requires ≥1. |
-| `plugins/chorus/scripts/tests/` | `node --test` smoke tests for companion.mjs helpers and subcommands. Run with `npm test`. |
+| `plugins/chorus/scripts/tests/` | `node --test` smoke tests for companion.mjs helpers and subcommands (29 tests). |
+| `for-opencode/src/tests/` | `node --test` hermetic MCP server tests — tools/list, check_agents, council, second_opinion, vote (8 tests). |
 | `plugins/chorus/commands/*.md` | Claude Code slash-command specs for each workflow pattern. |
 | `for-opencode/src/index.js` | MCP server. Exports `delegate_*` tools, `check_agents`, `council` (strict mode), `parallel_review`, `parallel_debug`, `second_opinion` (with fallback), `vote`. |
 | `.claude-plugin/marketplace.json` | Claude Code plugin registry. |
@@ -81,7 +82,7 @@ const REGISTRY = {
 ## Running tests
 
 ```bash
-npm test   # runs plugins/chorus/scripts/tests/*.test.mjs (no live CLIs needed)
+npm test   # runs both suites: companion (29) + MCP server (8) = 37 tests, no live CLIs needed
 ```
 
 ## Known limitations
