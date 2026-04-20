@@ -1,6 +1,6 @@
 ---
 description: Quick independent second opinion from one agent on a decision or approach
-argument-hint: "[--agent claude|gemini|codex|cursor|kilo] <decision or approach>"
+argument-hint: "[--agent claude|gemini|codex|cursor|kilo] [--json] <decision or approach>"
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git:*)
 ---
@@ -17,12 +17,13 @@ Raw slash-command arguments:
 - Use `--agent codex` when you want a terse "is this over-engineered?" check.
 - Use `--agent cursor` for integration and codebase-fit questions.
 - Use `--agent kilo` for naming, readability, and maintainability questions.
-- If the chosen agent is not installed, the companion automatically falls back to the next available agent and tells you which one it used.
+- If the chosen agent is not installed, the companion automatically falls back to the next available agent and tells you which one it used. Default fallback order (no `--agent` flag): `gemini → claude → codex → kilo → cursor`. When `--agent` is specified and unavailable, fallback iterates `agentDefs` insertion order instead.
 
 **Execution mode:**
 - Default: foreground (quick — one agent only).
 - If `--background` is in arguments, run background mode.
-- Strip `--background` and `--wait` before passing to companion.
+- If `--json` is in the arguments, the companion emits `{"command":"second-opinion","results":[{name,output,error,exitCode}]}` on stdout instead of delimited text. Warnings still go to stderr.
+- Strip `--background`, `--wait`, and `--json` before passing to companion.
 
 **Pre-flight:**
 The companion checks whether the chosen agent is installed and falls back to the next available one if not. If no agents are available at all, it exits non-zero — tell the user to install at least one agent.
@@ -40,6 +41,8 @@ Bash({
   run_in_background: true
 })
 ```
+
+Tell the user: "Second opinion started in the background. You'll be notified when it completes."
 
 **After the companion exits:**
 

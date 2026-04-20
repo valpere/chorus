@@ -1,5 +1,5 @@
 ---
-applyTo: "for-gemini/**/*.md,for-codex/**/*.md"
+applyTo: "for-gemini/**/*.md,for-codex/**/*.md,for-kilo/**/*.md,for-cursor/**/*.mdc"
 ---
 
 ## SKILL.md review guidelines
@@ -21,7 +21,11 @@ applyTo: "for-gemini/**/*.md,for-codex/**/*.md"
 
 **Codex skills** that involve file reading (parallel-review, parallel-debug) must include a `## Known limitation` section noting the sandbox restriction.
 
+**Second-opinion defaults are host-specific**: a host's own skill should not default to itself. Example: the chorus command defaults to Gemini; `for-gemini/second-opinion` defaults to Claude (Gemini is the caller, so it asks someone else).
+
 Invocation bash blocks must use the correct non-interactive flags:
 - Claude: `claude --print "..." --dangerously-skip-permissions`
 - Gemini: `gemini --prompt "..." --yolo --output-format text`
 - Codex: `codex exec "..."`
+- Cursor: `agent -p --force "..."` (binary is `agent`, not `cursor`)
+- Kilo: `kilo run --auto "..."`

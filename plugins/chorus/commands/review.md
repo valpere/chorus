@@ -1,6 +1,6 @@
 ---
 description: Parallel code review from all five agents on the current git diff
-argument-hint: "[--wait|--background]"
+argument-hint: "[--wait|--background] [--json]"
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git:*)
 ---
@@ -22,7 +22,8 @@ Each agent reviews the current `git diff HEAD`.
 **Execution mode:**
 - Default: background (reviews are slow).
 - If `--wait` is in the arguments, run in foreground.
-- Strip `--background` and `--wait` before passing to companion.
+- If `--json` is in the arguments, the companion emits `{"command":"review","results":[{name,output,error,exitCode}]}` on stdout instead of delimited text. Warnings still go to stderr.
+- Strip `--background`, `--wait`, and `--json` before passing to companion.
 
 **Pre-flight:**
 The companion automatically checks which agents are installed. Missing agents are reported in stdout with install instructions. The review proceeds with whatever agents are available — at least 2 are required; if fewer are installed the companion exits non-zero and you should tell the user to install more agents.
@@ -40,6 +41,8 @@ Bash({
   run_in_background: true
 })
 ```
+
+Tell the user: "Parallel review started in the background. You'll be notified when it completes."
 
 **After the companion exits, synthesize:**
 

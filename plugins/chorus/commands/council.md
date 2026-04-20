@@ -1,6 +1,6 @@
 ---
 description: Run an LLM council — five agents tackle the same task with different roles, then synthesize
-argument-hint: "[--wait|--background] <task or question>"
+argument-hint: "[--wait|--background] [--json] <task or question>"
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git:*)
 ---
@@ -20,7 +20,8 @@ Raw slash-command arguments:
 **Execution mode:**
 - Default: foreground (council output needs immediate synthesis).
 - If `--background` is in the arguments, run in background mode.
-- Strip `--background` and `--wait` before passing to the companion.
+- If `--json` is in the arguments, the companion emits `{"command":"council","results":[{name,output,error,exitCode}]}` on stdout instead of delimited text. Warnings still go to stderr.
+- Strip `--background`, `--wait`, and `--json` before passing to the companion.
 
 **Pre-flight:**
 The companion automatically checks which agents are installed. Missing agents are reported in stdout with install instructions. The council proceeds with whatever agents are available — at least 2 are required; if fewer are installed the companion exits non-zero and you should tell the user to install more agents.
@@ -38,6 +39,8 @@ Bash({
   run_in_background: true
 })
 ```
+
+Tell the user: "Council started in the background. You'll be notified when it completes."
 
 **After the companion exits, synthesize as chairman:**
 

@@ -20,7 +20,7 @@ Steps:
 
 3. Check that ANTHROPIC_API_KEY is set:
    ```bash
-   echo $ANTHROPIC_API_KEY
+   if [ -n "$ANTHROPIC_API_KEY" ]; then echo "ANTHROPIC_API_KEY is set"; else echo "ANTHROPIC_API_KEY is not set"; fi
    ```
 
 If any check fails, provide installation instructions:

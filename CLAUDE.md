@@ -15,3 +15,12 @@ node plugins/chorus/scripts/companion.mjs review
 node plugins/chorus/scripts/companion.mjs debug "<symptom>"
 node plugins/chorus/scripts/companion.mjs second-opinion [--agent <name>] "<approach>"
 ```
+
+## Maintainer
+
+Claude Code is the primary host and maintainer for this project.
+
+When adding a new agent or modifying the delegation mesh, follow:
+- **`docs/add-agent-checklist.md`** — step-by-step guide for adding a new agent
+- **`.github/instructions/skill-files.instructions.md`** — canonical CLI flags and SKILL.md format rules for all agents
+- **`.github/instructions/companion-scripts.instructions.md`** — companion script conventions (stdio, stripFlags, check-all coverage)

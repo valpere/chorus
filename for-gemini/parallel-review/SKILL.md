@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: valpere
-  version: 1.0.0
+  version: "1.0.0"
 ---
 
 # Chorus: Parallel Code Review

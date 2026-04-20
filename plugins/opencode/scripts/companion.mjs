@@ -1,9 +1,4 @@
-import { spawn, spawnSync } from 'child_process';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { spawn, spawnSync } from 'node:child_process';
 
 const [,, cmd, ...rest] = process.argv;
 

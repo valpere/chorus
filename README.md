@@ -29,7 +29,7 @@ Adds slash commands:
 - `/opencode:run`, `/opencode:review`
 - `/gemini:run`, `/gemini:review`
 - `/codex:run`, `/codex:review`
-- `/claude:run`, `/claude:review` (second Claude instance)
+- `/claude:setup`, `/claude:run`, `/claude:review` (second Claude instance)
 - `/cursor:run`, `/cursor:review`, `/cursor:setup`
 - `/kilo:run`, `/kilo:review`, `/kilo:setup`
 
@@ -295,6 +295,20 @@ Quick independent check from one agent. Default: Gemini. Override with `--agent`
 /chorus:second-opinion --agent kilo "Is this function name clear enough for future maintainers?"
 ```
 
+### Using chorus in Claude Code Plan mode
+
+Claude Code's Plan mode is a good entry point for chorus workflows. When you enter Plan mode before a complex feature, call `/chorus:council` to get multi-agent input before committing to an approach, or `/chorus:second-opinion` for a quick sanity check on a specific decision.
+
+```bash
+# During architecture planning — get five perspectives before writing code
+/chorus:council "We need to add distributed rate limiting. Redis vs in-memory vs a dedicated proxy?"
+
+# Quick check on a specific design choice
+/chorus:second-opinion --agent codex "Is a factory function better than a class here?"
+```
+
+The council output feeds directly into your plan: consensus points become confirmed requirements, disagreements surface trade-offs worth deciding before implementation starts.
+
 ---
 
 ## Execution Modes
@@ -303,6 +317,10 @@ All `run` and `review` commands support two execution modes:
 
 - `--wait` (or no flag with user confirmation) - Run in foreground and return results immediately
 - `--background` - Run as a background task and notify when complete
+
+The four chorus workflow commands (`council`, `review`, `debug`, `second-opinion`) also support:
+
+- `--json` - Emit structured JSON on stdout instead of delimited text: `{"command":"<cmd>","results":[{"name":"...","output":"...","error":"...","exitCode":0}]}`. Warnings about unavailable agents still go to stderr. Useful for scripting or programmatic consumption of agent output.
 
 ## Requirements
 
