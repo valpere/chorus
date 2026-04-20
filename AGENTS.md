@@ -38,7 +38,7 @@ Each `for-*/` directory has 9 entries: 5 delegation targets + council + parallel
 
 | File | Purpose |
 |------|---------|
-| `plugins/chorus/scripts/companion.mjs` | Core orchestrator. Runs `council`, `review`, `debug`, `second-opinion` subcommands. Checks agent availability, warns about missing agents, proceeds with ≥2. |
+| `plugins/chorus/scripts/companion.mjs` | Core orchestrator. Runs `council`, `review`, `debug`, `second-opinion` subcommands. Checks agent availability, warns about missing agents. `council`/`review`/`debug` require ≥2 agents; `second-opinion` requires ≥1. |
 | `plugins/chorus/commands/*.md` | Claude Code slash-command specs for each workflow pattern. |
 | `for-opencode/src/index.js` | MCP server. Exports `delegate_*` tools and `council`, `parallel_review`, `parallel_debug`, `second_opinion`. |
 | `.claude-plugin/marketplace.json` | Claude Code plugin registry. |
