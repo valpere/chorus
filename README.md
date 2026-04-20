@@ -255,9 +255,11 @@ kilo run --auto "Run a council on whether to use Redis or Postgres for this queu
 
 Workflow patterns orchestrate **multiple agents in parallel** and synthesize the results. Install the `chorus` plugin once to access all four.
 
+**Graceful degradation:** Each workflow pattern checks agent availability at runtime. Missing agents are reported in the output with install instructions, and the command proceeds with the available subset. A minimum of 2 agents is required; if fewer are installed the command exits with an error.
+
 ### LLM Council
 
-Three agents tackle the same task with different roles; the host synthesizes as chairman.
+Five agents tackle the same task with different roles; the host synthesizes as chairman.
 
 ```bash
 /chorus:council "Should we use optimistic locking or a distributed lock for this feature?"
@@ -311,6 +313,8 @@ All `run` and `review` commands support two execution modes:
 - [Codex](https://github.com/openai/codex) (for delegation to/from Codex)
 - [Cursor Agent CLI](https://cursor.com/docs/cli) (`agent` binary, optional — for Cursor delegation)
 - [Kilo Code CLI](https://kilo.ai/docs/cli) (`kilo` binary, optional — for Kilo delegation)
+
+Not all agents need to be installed. Workflow patterns (`/chorus:*`) work with any available subset — at least 2 agents required.
 
 ## Project Structure
 
