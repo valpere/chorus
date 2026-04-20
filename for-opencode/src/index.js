@@ -75,14 +75,26 @@ const TOOLS = [
     }
   },
   {
+    name: 'check_agents',
+    description: 'Report availability of all 5 target CLIs (claude, gemini, codex, cursor, kilo) — mirrors /chorus check-all',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
+  },
+  {
     name: 'council',
-    description: 'Run an LLM council: Claude (correctness), Gemini (edge cases), Codex (scope), Cursor (integration), Kilo (maintainability) tackle the same task in parallel. Returns delimited output — the host agent synthesizes.',
+    description: 'Run an LLM council: Claude (correctness), Gemini (edge cases), Codex (scope), Cursor (integration), Kilo (maintainability) tackle the same task in parallel. Returns delimited output — the host agent synthesizes.\n\nstrict: if true, every agent slot is preserved and missing agents appear as [error: ...]; if false (default), missing agents are filtered out and a "⚠ Skipped: ..." line is prepended.',
     inputSchema: {
       type: 'object',
       properties: {
         task: {
           type: 'string',
           description: 'The task, question, or decision to put before the council'
+        },
+        strict: {
+          type: 'boolean',
+          description: 'If true, run all agents regardless of availability and show errors inline. If false (default), skip unavailable agents and prepend a warning.'
         }
       },
       required: ['task']
@@ -90,21 +102,30 @@ const TOOLS = [
   },
   {
     name: 'parallel_review',
-    description: 'Parallel code review of the current git diff: Claude (correctness/security), Gemini (edge cases), Codex (scope/simplicity), Cursor (integration), Kilo (maintainability). Returns delimited output — the host agent synthesizes.',
+    description: 'Parallel code review of the current git diff: Claude (correctness/security), Gemini (edge cases), Codex (scope/simplicity), Cursor (integration), Kilo (maintainability). Returns delimited output — the host agent synthesizes.\n\nstrict: if true, every agent slot is preserved and missing agents appear as [error: ...]; if false (default), missing agents are filtered out and a "⚠ Skipped: ..." line is prepended.',
     inputSchema: {
       type: 'object',
-      properties: {}
+      properties: {
+        strict: {
+          type: 'boolean',
+          description: 'If true, run all agents regardless of availability and show errors inline. If false (default), skip unavailable agents and prepend a warning.'
+        }
+      }
     }
   },
   {
     name: 'parallel_debug',
-    description: 'Parallel root-cause hypotheses from five agents for a given symptom. Returns ranked hypotheses per agent — the host synthesizes an investigation plan.',
+    description: 'Parallel root-cause hypotheses from five agents for a given symptom. Returns ranked hypotheses per agent — the host synthesizes an investigation plan.\n\nstrict: if true, every agent slot is preserved and missing agents appear as [error: ...]; if false (default), missing agents are filtered out and a "⚠ Skipped: ..." line is prepended.',
     inputSchema: {
       type: 'object',
       properties: {
         symptom: {
           type: 'string',
           description: 'The bug symptom or unexpected behavior to diagnose'
+        },
+        strict: {
+          type: 'boolean',
+          description: 'If true, run all agents regardless of availability and show errors inline. If false (default), skip unavailable agents and prepend a warning.'
         }
       },
       required: ['symptom']
@@ -112,7 +133,7 @@ const TOOLS = [
   },
   {
     name: 'second_opinion',
-    description: 'Quick independent second opinion from one agent on a decision or approach. Agent gives a verdict: approve / approve-with-caveats / reject.',
+    description: 'Quick independent second opinion from one agent on a decision or approach. Agent gives a verdict: approve / approve-with-caveats / reject.\n\nIf the requested agent is unavailable, automatically falls back to the next available agent in order: gemini → claude → codex → kilo → cursor. A warning line is prepended to the output naming which agent was actually used.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -128,10 +149,33 @@ const TOOLS = [
       },
       required: ['approach']
     }
+  },
+  {
+    name: 'vote',
+    description: 'Put a yes/no proposition to all five agents and tally their votes (YES / NO / ABSTAIN). Returns a tally table and per-agent rationale — simpler than council when you need a decision signal rather than synthesis.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        proposition: {
+          type: 'string',
+          description: 'The proposition to vote on (e.g. "Adopt TypeScript for new files?")'
+        }
+      },
+      required: ['proposition']
+    }
   }
 ];
 
-// Check if a CLI binary exists and get its version
+// ── CLI helpers ───────────────────────────────────────────────────────────────
+
+const BINARIES = {
+  claude: 'claude',
+  gemini: 'gemini',
+  codex: 'codex',
+  cursor: 'agent',
+  kilo: 'kilo',
+};
+
 function checkCli(binary) {
   try {
     const result = spawnSync(binary, ['--version'], { encoding: 'utf8' });
@@ -144,7 +188,23 @@ function checkCli(binary) {
   }
 }
 
-// Execute Claude with a task
+/** Returns { available: [{name, fn}], skipped: [name] } */
+function filterAvailable(tasks) {
+  const available = [];
+  const skipped = [];
+  for (const t of tasks) {
+    const binary = BINARIES[t.name];
+    if (binary && checkCli(binary).available) {
+      available.push(t);
+    } else {
+      skipped.push(t.name);
+    }
+  }
+  return { available, skipped };
+}
+
+// ── delegate functions ────────────────────────────────────────────────────────
+
 async function delegateToClaude(task) {
   const check = checkCli('claude');
   if (!check.available) {
@@ -155,18 +215,13 @@ async function delegateToClaude(task) {
     const proc = spawn('claude', ['--print', task, '--dangerously-skip-permissions'], {
       stdio: ['pipe', 'pipe', 'pipe']
     });
-    
+
     let stdout = '';
     let stderr = '';
-    
-    proc.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-    
-    proc.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-    
+
+    proc.stdout.on('data', (data) => { stdout += data.toString(); });
+    proc.stderr.on('data', (data) => { stderr += data.toString(); });
+
     proc.on('close', (code) => {
       if (code !== 0 && code !== null) {
         reject(new Error(`Claude exited with code ${code}: ${stderr || stdout}`));
@@ -174,14 +229,13 @@ async function delegateToClaude(task) {
         resolve(stdout);
       }
     });
-    
+
     proc.on('error', (err) => {
       reject(new Error(`Failed to run Claude: ${err.message}`));
     });
   });
 }
 
-// Execute Gemini with a task
 async function delegateToGemini(task) {
   const check = checkCli('gemini');
   if (!check.available) {
@@ -192,18 +246,13 @@ async function delegateToGemini(task) {
     const proc = spawn('gemini', ['--prompt', task, '--yolo', '--output-format', 'text'], {
       stdio: ['pipe', 'pipe', 'pipe']
     });
-    
+
     let stdout = '';
     let stderr = '';
-    
-    proc.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-    
-    proc.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-    
+
+    proc.stdout.on('data', (data) => { stdout += data.toString(); });
+    proc.stderr.on('data', (data) => { stderr += data.toString(); });
+
     proc.on('close', (code) => {
       if (code !== 0 && code !== null) {
         reject(new Error(`Gemini exited with code ${code}: ${stderr || stdout}`));
@@ -211,14 +260,13 @@ async function delegateToGemini(task) {
         resolve(stdout);
       }
     });
-    
+
     proc.on('error', (err) => {
       reject(new Error(`Failed to run Gemini: ${err.message}`));
     });
   });
 }
 
-// Execute Cursor Agent with a task
 async function delegateToCursor(task) {
   const check = checkCli('agent');
   if (!check.available) {
@@ -250,7 +298,6 @@ async function delegateToCursor(task) {
   });
 }
 
-// Execute Kilo with a task
 async function delegateToKilo(task) {
   const check = checkCli('kilo');
   if (!check.available) {
@@ -282,7 +329,6 @@ async function delegateToKilo(task) {
   });
 }
 
-// Execute Codex with a task
 async function delegateToCodex(task) {
   const check = checkCli('codex');
   if (!check.available) {
@@ -293,18 +339,13 @@ async function delegateToCodex(task) {
     const proc = spawn('codex', ['exec', task], {
       stdio: ['pipe', 'pipe', 'pipe']
     });
-    
+
     let stdout = '';
     let stderr = '';
-    
-    proc.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-    
-    proc.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-    
+
+    proc.stdout.on('data', (data) => { stdout += data.toString(); });
+    proc.stderr.on('data', (data) => { stderr += data.toString(); });
+
     proc.on('close', (code) => {
       if (code !== 0 && code !== null) {
         reject(new Error(`Codex exited with code ${code}: ${stderr || stdout}`));
@@ -312,12 +353,20 @@ async function delegateToCodex(task) {
         resolve(stdout);
       }
     });
-    
+
     proc.on('error', (err) => {
       reject(new Error(`Failed to run Codex: ${err.message}`));
     });
   });
 }
+
+const DELEGATE_FNS = {
+  claude: delegateToClaude,
+  gemini: delegateToGemini,
+  codex: delegateToCodex,
+  cursor: delegateToCursor,
+  kilo: delegateToKilo,
+};
 
 // ── orchestration helpers ─────────────────────────────────────────────────────
 
@@ -339,8 +388,35 @@ async function runParallel(tasks) {
   }));
 }
 
-async function runCouncil(task) {
-  return runParallel([
+/**
+ * Run tasks with optional graceful degradation.
+ * strict=false (default): filters out unavailable agents, prepends ⚠ Skipped header, throws if <2 available.
+ * strict=true: runs all tasks regardless, inline [error:...] on failure.
+ */
+async function runParallelWithDegradation(tasks, strict = false) {
+  if (strict) {
+    return runParallel(tasks);
+  }
+
+  const { available, skipped } = filterAvailable(tasks);
+  if (available.length < 2) {
+    throw new Error(
+      `Not enough agents available (need at least 2, got ${available.length}).` +
+      (skipped.length ? ` Missing: ${skipped.join(', ')}. Install them to proceed.` : '')
+    );
+  }
+
+  const results = await runParallel(available);
+  const prefix = skipped.length ? `⚠ Skipped: ${skipped.join(', ')}\n\n` : '';
+  return { results, prefix };
+}
+
+function formatDelimitedWithPrefix(results, prefix) {
+  return (prefix || '') + delimit(results);
+}
+
+async function runCouncil(task, strict = false) {
+  const tasks = [
     {
       name: 'claude',
       fn: () => delegateToClaude(
@@ -381,17 +457,18 @@ async function runCouncil(task) {
         `Be concise — bullet points preferred.\n\nTask: ${task}`
       )
     }
-  ]);
+  ];
+  return runParallelWithDegradation(tasks, strict);
 }
 
-async function runParallelReview() {
+async function runParallelReview(strict = false) {
   const gitResult = spawnSync('git', ['diff', 'HEAD'], { encoding: 'utf8' });
   if (gitResult.error || gitResult.status !== 0) {
     const msg = gitResult.stderr?.trim() || gitResult.error?.message || `exit ${gitResult.status}`;
     throw new Error(`Failed to get git diff: ${msg}`);
   }
   const diff = gitResult.stdout?.trim() || 'No uncommitted changes found.';
-  return runParallel([
+  const tasks = [
     {
       name: 'claude',
       fn: () => delegateToClaude(
@@ -432,21 +509,23 @@ async function runParallelReview() {
         `Be concise — numbered findings.\n\n${diff}`
       )
     }
-  ]);
+  ];
+  return runParallelWithDegradation(tasks, strict);
 }
 
-async function runParallelDebug(symptom) {
+async function runParallelDebug(symptom, strict = false) {
   const prompt = (focus) =>
     `A software bug has been reported. Generate a ranked list of hypotheses for the root cause.\n` +
     `Focus area: ${focus}.\n` +
     `Format: numbered list, most likely first, one sentence per hypothesis.\n\nSymptom: ${symptom}`;
-  return runParallel([
+  const tasks = [
     { name: 'claude',  fn: () => delegateToClaude(prompt('application logic, state management, data flow')) },
     { name: 'gemini',  fn: () => delegateToGemini(prompt('infrastructure, concurrency, external dependencies, environment')) },
     { name: 'codex',   fn: () => delegateToCodex(prompt('edge cases in input handling, type coercion, off-by-one errors')) },
     { name: 'cursor',  fn: () => delegateToCursor(prompt('framework, library, and third-party integration issues')) },
     { name: 'kilo',    fn: () => delegateToKilo(prompt('naming, types, readability, and long-term maintainability')) }
-  ]);
+  ];
+  return runParallelWithDegradation(tasks, strict);
 }
 
 async function runSecondOpinion(approach, agent = 'gemini') {
@@ -454,18 +533,88 @@ async function runSecondOpinion(approach, agent = 'gemini') {
     `Give a concise second opinion on the following decision or approach.\n` +
     `Be direct: state what you agree with, what concerns you, and your overall verdict (approve / approve-with-caveats / reject).\n\n` +
     `${approach}`;
-  const fns = { claude: delegateToClaude, gemini: delegateToGemini, codex: delegateToCodex, cursor: delegateToCursor, kilo: delegateToKilo };
-  const fn = fns[agent];
-  if (!fn) throw new Error(`Unknown agent: ${agent}`);
-  const output = (await fn(prompt)).trim();
-  return [{ name: agent, output }];
+
+  if (!DELEGATE_FNS[agent]) throw new Error(`Unknown agent: ${agent}`);
+
+  const defaultOrder = ['gemini', 'claude', 'codex', 'kilo', 'cursor'];
+  let chosenAgent = agent;
+
+  if (!checkCli(BINARIES[chosenAgent]).available) {
+    const fallback = defaultOrder.find(n => n !== chosenAgent && checkCli(BINARIES[n]).available);
+    if (!fallback) {
+      throw new Error(`Agent "${chosenAgent}" not available and no alternatives are installed. Install at least one agent to use second_opinion.`);
+    }
+    const warning = `⚠ Agent "${chosenAgent}" unavailable — used "${fallback}".\n\n`;
+    const output = ((await DELEGATE_FNS[fallback](prompt))).trim();
+    return [{ name: fallback, output: warning + output }];
+  }
+
+  const output = ((await DELEGATE_FNS[chosenAgent](prompt))).trim();
+  return [{ name: chosenAgent, output }];
 }
 
-// Create MCP server
+function parseVote(text) {
+  const line = text.split('\n').find(l => l.trim().length > 0) || '';
+  const clean = line.replace(/[*_`]/g, '').trim().toUpperCase();
+  if (/^YES\b/.test(clean)) return { vote: 'YES', rationale: line.replace(/^yes[^a-z]*/i, '').trim() };
+  if (/^NO\b/.test(clean)) return { vote: 'NO', rationale: line.replace(/^no[^a-z]*/i, '').trim() };
+  if (/^ABSTAIN\b/.test(clean)) return { vote: 'ABSTAIN', rationale: line.replace(/^abstain[^a-z]*/i, '').trim() };
+  return { vote: 'INVALID', rationale: line };
+}
+
+async function runVote(proposition) {
+  const prompt =
+    `Vote on the following proposition. Reply with a single line starting with YES, NO, or ABSTAIN (uppercase), ` +
+    `followed by one sentence of rationale. No other text.\n\nProposition: ${proposition}`;
+
+  const tasks = [
+    { name: 'claude',  fn: () => delegateToClaude(prompt) },
+    { name: 'gemini',  fn: () => delegateToGemini(prompt) },
+    { name: 'codex',   fn: () => delegateToCodex(prompt) },
+    { name: 'cursor',  fn: () => delegateToCursor(prompt) },
+    { name: 'kilo',    fn: () => delegateToKilo(prompt) },
+  ];
+
+  const { available, skipped } = filterAvailable(tasks);
+  if (available.length < 2) {
+    throw new Error(
+      `Not enough agents available for a vote (need at least 2, got ${available.length}).` +
+      (skipped.length ? ` Missing: ${skipped.join(', ')}.` : '')
+    );
+  }
+
+  const raw = await runParallel(available);
+  const tally = { yes: 0, no: 0, abstain: 0, invalid: 0 };
+  const parsed = raw.map(r => {
+    const { vote, rationale } = parseVote(r.output);
+    tally[vote.toLowerCase()]++;
+    return { name: r.name, vote, rationale, output: r.output };
+  });
+
+  const sep = '─'.repeat(40);
+  const tallyTable = [
+    `| Vote | Count |`,
+    `|------|-------|`,
+    `| YES  | ${tally.yes} |`,
+    `| NO   | ${tally.no} |`,
+    `| ABSTAIN | ${tally.abstain} |`,
+    tally.invalid > 0 ? `| INVALID | ${tally.invalid} |` : null,
+  ].filter(Boolean).join('\n');
+
+  const agentSections = parsed.map(r =>
+    `${sep}\n${r.name.toUpperCase()}: ${r.vote}\n${sep}\n${r.rationale || r.output}`
+  ).join('\n\n');
+
+  const skippedNote = skipped.length ? `⚠ Skipped: ${skipped.join(', ')}\n\n` : '';
+  return skippedNote + `## Vote Tally\n\n${tallyTable}\n\n## Per-Agent Rationale\n\n${agentSections}`;
+}
+
+// ── MCP server ────────────────────────────────────────────────────────────────
+
 const server = new Server(
   {
     name: 'chorus-opencode',
-    version: '1.0.0'
+    version: '1.1.0'
   },
   {
     capabilities: {
@@ -474,21 +623,17 @@ const server = new Server(
   }
 );
 
-// Handle list tools request
 server.setRequestHandler('tools/list', async () => {
   return { tools: TOOLS };
 });
 
-// Handle tool calls
 server.setRequestHandler('tools/call', async (request) => {
   const { name, arguments: args = {} } = request.params;
 
-  let results;
-
-  function requireString(value, name) {
-    if (typeof value !== 'string') throw new Error(`Missing required parameter: ${name}`);
+  function requireString(value, paramName) {
+    if (typeof value !== 'string') throw new Error(`Missing required parameter: ${paramName}`);
     const trimmed = value.trim();
-    if (!trimmed) throw new Error(`Parameter ${name} must be a non-empty string`);
+    if (!trimmed) throw new Error(`Parameter ${paramName} must be a non-empty string`);
     return trimmed;
   }
 
@@ -513,38 +658,53 @@ server.setRequestHandler('tools/call', async (request) => {
       const task = requireString(args.task, 'task');
       return { content: [{ type: 'text', text: (await delegateToCodex(task)).trim() }] };
     }
+    case 'check_agents': {
+      const rows = Object.entries(BINARIES).map(([agentName, binary]) => {
+        const check = checkCli(binary);
+        const status = check.available ? `✓ ${check.version}` : `✗ not found`;
+        return `| ${agentName} | \`${binary}\` | ${status} |`;
+      });
+      const table = `| Agent | Binary | Status |\n|-------|--------|--------|\n${rows.join('\n')}`;
+      return { content: [{ type: 'text', text: table }] };
+    }
     case 'council': {
       const task = requireString(args.task, 'task');
-      results = await runCouncil(task);
-      break;
+      const strict = args.strict === true;
+      const out = await runCouncil(task, strict);
+      const text = strict ? delimit(out) : formatDelimitedWithPrefix(out.results, out.prefix);
+      return { content: [{ type: 'text', text }] };
     }
     case 'parallel_review': {
-      results = await runParallelReview();
-      break;
+      const strict = args.strict === true;
+      const out = await runParallelReview(strict);
+      const text = strict ? delimit(out) : formatDelimitedWithPrefix(out.results, out.prefix);
+      return { content: [{ type: 'text', text }] };
     }
     case 'parallel_debug': {
       const symptom = requireString(args.symptom, 'symptom');
-      results = await runParallelDebug(symptom);
-      break;
+      const strict = args.strict === true;
+      const out = await runParallelDebug(symptom, strict);
+      const text = strict ? delimit(out) : formatDelimitedWithPrefix(out.results, out.prefix);
+      return { content: [{ type: 'text', text }] };
     }
     case 'second_opinion': {
       const approach = requireString(args.approach, 'approach');
-      const supportedAgents = new Set(['claude', 'gemini', 'codex', 'cursor', 'kilo']);
+      const supportedAgents = new Set(Object.keys(DELEGATE_FNS));
       const agent = args.agent ?? 'gemini';
       if (!supportedAgents.has(agent)) throw new Error(`Invalid agent: ${agent}. Choose from: ${[...supportedAgents].join(', ')}`);
-      results = await runSecondOpinion(approach, agent);
-      break;
+      const results = await runSecondOpinion(approach, agent);
+      return { content: [{ type: 'text', text: delimit(results) }] };
+    }
+    case 'vote': {
+      const proposition = requireString(args.proposition, 'proposition');
+      const text = await runVote(proposition);
+      return { content: [{ type: 'text', text }] };
     }
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
-
-  return {
-    content: [{ type: 'text', text: delimit(results) }]
-  };
 });
 
-// Start server with stdio transport
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

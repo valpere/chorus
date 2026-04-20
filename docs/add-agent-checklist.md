@@ -37,10 +37,11 @@ In `plugins/chorus/scripts/companion.mjs`:
 3. **review**: add the same agent with a review-focused prompt variant.
 4. **debug**: add the same agent with a debug-hypothesis prompt variant.
 5. **second-opinion**: add the agent to `agentDefs` (same pattern as existing entries) and to `defaultOrder` (the fallback priority list for the no-`--agent` path).
+6. **vote**: add the same agent tuple shape used in council (binary + args array with the vote prompt).
 
 ## 4 — Delegation target skills for other hosts
 
-Create `for-<newagent>/` with 10 entries (6 existing agents as delegation targets + 4 workflow patterns):
+Create `for-<newagent>/` with 11 entries (6 existing agents as delegation targets + 5 workflow patterns):
 
 ```
 for-<newagent>/
@@ -53,7 +54,8 @@ for-<newagent>/
 ├── council/SKILL.md
 ├── parallel-review/SKILL.md
 ├── parallel-debug/SKILL.md
-└── second-opinion/SKILL.md
+├── second-opinion/SKILL.md
+└── vote/SKILL.md
 ```
 
 Use the same format as `for-kilo/` (minimal Codex-style) or `for-gemini/` (full metadata) depending on the host's skill format. Canonical invocation flags are in `.github/instructions/skill-files.instructions.md`.
@@ -69,7 +71,9 @@ for-cursor/<newagent>/RULE.mdc
 for-kilo/<newagent>/SKILL.md
 ```
 
-Use `for-gemini/kilo/SKILL.md` as the reference. Add a matching `delegate_<newagent>` tool to `for-opencode/src/index.js`.
+Use `for-gemini/kilo/SKILL.md` as the reference. Add a matching `delegate_<newagent>` tool to `for-opencode/src/index.js`, and add the new agent to all five parallel orchestrator functions (`runCouncil`, `runParallelReview`, `runParallelDebug`, `runSecondOpinion`, `runVote`). Also add the binary to the `BINARIES` map used by `filterAvailable`.
+
+Add the new agent name to the default binary list in `plugins/chorus/scripts/tests/helpers/fake-agents.mjs` `BINARY_MAP` so tests can create fake stubs for it.
 
 ## 6 — Documentation
 
@@ -83,8 +87,9 @@ Use `for-gemini/kilo/SKILL.md` as the reference. Add a matching `delegate_<newag
 - [ ] `.claude-plugin/marketplace.json` — new entry
 - [ ] `plugins/<agent>/` — setup/run/review commands + companion.mjs
 - [ ] `plugins/chorus/scripts/companion.mjs` — REGISTRY + council/review/debug blocks
-- [ ] `for-<newagent>/` — 9 SKILL.md (or RULE.mdc) files
+- [ ] `for-<newagent>/` — 11 SKILL.md (or RULE.mdc) files (6 delegation targets + 5 workflow patterns)
 - [ ] `for-gemini/<newagent>/`, `for-codex/<newagent>/`, `for-cursor/<newagent>/`, `for-kilo/<newagent>/` — delegation skills
-- [ ] `for-opencode/src/index.js` — `delegate_<newagent>` tool
+- [ ] `for-opencode/src/index.js` — `delegate_<newagent>` tool + add to BINARIES + add to all 5 parallel orchestrators
+- [ ] `plugins/chorus/scripts/tests/helpers/fake-agents.mjs` — add to `BINARY_MAP`
 - [ ] `AGENTS.md`, `README.md` — documentation
 - [ ] `.github/instructions/*.md` — canonical-flag rules updated

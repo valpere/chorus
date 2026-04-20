@@ -10,3 +10,4 @@ applyTo: "plugins/*/scripts/*.mjs"
 - Role prompts prepended to tasks must be clearly labelled (e.g. `You are the CORRECTNESS reviewer`) so the agent understands its council role without ambiguity.
 - `stripFlags` must remove `--background`, `--wait`, `--json`, and `--agent`/`--agent=*` before passing the task string to CLIs.
 - `check-all` subcommand must check all five target CLIs (`claude`, `gemini`, `codex`, `cursor`, `kilo`) and print which ones are missing with a reference to the appropriate `/setup` command. OpenCode is excluded — its TUI stdout is not capturable.
+- `companion.mjs` is a dual-purpose module: it exports helpers (`stripFlags`, `checkCli`, `filterAvailable`, `runAgent`, `printDelimited`, `printJSON`, `requireAvailable`, `REGISTRY`) for tests, and runs the CLI dispatcher when `import.meta.url === \`file://\${process.argv[1]}\``. Tests live in `plugins/chorus/scripts/tests/` and run with `npm test`.
