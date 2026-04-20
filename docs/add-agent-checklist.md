@@ -73,7 +73,7 @@ for-kilo/<newagent>/SKILL.md
 
 Use `for-gemini/kilo/SKILL.md` as the reference. Add a matching `delegate_<newagent>` tool to `for-opencode/src/index.js`, and add the new agent to all five parallel orchestrator functions (`runCouncil`, `runParallelReview`, `runParallelDebug`, `runSecondOpinion`, `runVote`). Also add the binary to the `BINARIES` map used by `filterAvailable`.
 
-Add the new agent name to the default binary list in `plugins/chorus/scripts/tests/helpers/fake-agents.mjs` `BINARY_MAP` so tests can create fake stubs for it.
+Add the new agent name to `BINARY_MAP` in both `plugins/chorus/scripts/tests/helpers/fake-agents.mjs` and `for-opencode/src/tests/helpers/mcp-session.mjs` so both test suites can create fake stubs for it. Add `delegate_<newagent>` to the `tools/list` assertion in `for-opencode/src/tests/mcp.test.mjs`.
 
 ## 6 — Documentation
 
@@ -91,5 +91,7 @@ Add the new agent name to the default binary list in `plugins/chorus/scripts/tes
 - [ ] `for-gemini/<newagent>/`, `for-codex/<newagent>/`, `for-cursor/<newagent>/`, `for-kilo/<newagent>/` — delegation skills
 - [ ] `for-opencode/src/index.js` — `delegate_<newagent>` tool + add to BINARIES + add to all 5 parallel orchestrators
 - [ ] `plugins/chorus/scripts/tests/helpers/fake-agents.mjs` — add to `BINARY_MAP`
+- [ ] `for-opencode/src/tests/helpers/mcp-session.mjs` — add `<newagent>` to `BINARY_MAP`
+- [ ] `for-opencode/src/tests/mcp.test.mjs` — add `delegate_<newagent>` to the `tools/list` assertion
 - [ ] `AGENTS.md`, `README.md` — documentation
 - [ ] `.github/instructions/*.md` — canonical-flag rules updated
