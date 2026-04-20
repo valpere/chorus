@@ -40,7 +40,7 @@ In `plugins/chorus/scripts/companion.mjs`:
 
 ## 4 — Delegation target skills for other hosts
 
-Create `for-<newagent>/` with 9 entries (5 delegation targets + 4 workflow patterns):
+Create `for-<newagent>/` with 10 entries (6 existing agents as delegation targets + 4 workflow patterns):
 
 ```
 for-<newagent>/
