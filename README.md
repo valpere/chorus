@@ -257,8 +257,6 @@ Chorus ships four workflow pattern commands. The multi-agent workflows (`/chorus
 
 **Graceful degradation:** All workflows check agent availability at runtime. Missing agents are reported in the output with install instructions. For `council`, `review`, and `debug`, the command proceeds with the available subset — a minimum of 2 agents is required. `/chorus:second-opinion` requires only 1 available agent.
 
-**Graceful degradation:** Each workflow pattern checks agent availability at runtime. Missing agents are reported in the output with install instructions, and the command proceeds with the available subset. A minimum of 2 agents is required; if fewer are installed the command exits with an error.
-
 ### LLM Council
 
 Five agents tackle the same task with different roles; the host synthesizes as chairman.
