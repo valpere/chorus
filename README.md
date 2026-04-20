@@ -38,6 +38,7 @@ Adds slash commands:
 - `/chorus:review` — parallel code review from all five agents
 - `/chorus:debug` — parallel root-cause hypotheses for a bug symptom
 - `/chorus:second-opinion` — quick independent check from one agent (`--agent cursor|kilo` supported)
+- `/chorus:vote` — YES / NO / ABSTAIN poll from all five agents, tally returned
 
 ### OpenCode
 
@@ -51,10 +52,12 @@ Adds MCP tools:
 - `delegate_codex(task: string) → string`
 - `delegate_cursor(task: string) → string`
 - `delegate_kilo(task: string) → string`
-- `council(task: string) → string` — parallel council, all five agents
-- `parallel_review() → string` — parallel review of current git diff
-- `parallel_debug(symptom: string) → string` — parallel root-cause hypotheses
-- `second_opinion(approach: string, agent?: 'claude'|'gemini'|'codex'|'cursor'|'kilo') → string`
+- `check_agents() → string` — report availability of all five CLIs
+- `council(task: string, strict?: boolean) → string` — parallel council, all five agents
+- `parallel_review(strict?: boolean) → string` — parallel review of current git diff
+- `parallel_debug(symptom: string, strict?: boolean) → string` — parallel root-cause hypotheses
+- `second_opinion(approach: string, agent?: 'claude'|'gemini'|'codex'|'cursor'|'kilo') → string` — fallback-enabled single-agent opinion
+- `vote(proposition: string) → string` — YES/NO/ABSTAIN tally from all five agents
 
 ### Gemini CLI
 
@@ -71,6 +74,7 @@ gemini skills install https://github.com/valpere/chorus --path for-gemini/counci
 gemini skills install https://github.com/valpere/chorus --path for-gemini/parallel-review
 gemini skills install https://github.com/valpere/chorus --path for-gemini/parallel-debug
 gemini skills install https://github.com/valpere/chorus --path for-gemini/second-opinion
+gemini skills install https://github.com/valpere/chorus --path for-gemini/vote
 ```
 
 Adds skills:
@@ -83,6 +87,7 @@ Adds skills:
 - `chorus-parallel-review` - Parallel code review
 - `chorus-parallel-debug` - Parallel root-cause hypotheses
 - `chorus-second-opinion` - Quick independent second opinion
+- `chorus-vote` - YES/NO/ABSTAIN parallel vote
 
 ### Codex
 
@@ -100,11 +105,13 @@ cp /tmp/chorus/for-codex/kilo/SKILL.md ~/.codex/skills/chorus-kilo/
 
 # Workflow pattern skills
 mkdir -p ~/.codex/skills/chorus-council ~/.codex/skills/chorus-parallel-review \
-         ~/.codex/skills/chorus-parallel-debug ~/.codex/skills/chorus-second-opinion
+         ~/.codex/skills/chorus-parallel-debug ~/.codex/skills/chorus-second-opinion \
+         ~/.codex/skills/chorus-vote
 cp /tmp/chorus/for-codex/council/SKILL.md ~/.codex/skills/chorus-council/
 cp /tmp/chorus/for-codex/parallel-review/SKILL.md ~/.codex/skills/chorus-parallel-review/
 cp /tmp/chorus/for-codex/parallel-debug/SKILL.md ~/.codex/skills/chorus-parallel-debug/
 cp /tmp/chorus/for-codex/second-opinion/SKILL.md ~/.codex/skills/chorus-second-opinion/
+cp /tmp/chorus/for-codex/vote/SKILL.md ~/.codex/skills/chorus-vote/
 ```
 
 Adds skills:
@@ -117,6 +124,7 @@ Adds skills:
 - `chorus-parallel-review` - Parallel code review
 - `chorus-parallel-debug` - Parallel root-cause hypotheses
 - `chorus-second-opinion` - Quick independent second opinion
+- `chorus-vote` - YES/NO/ABSTAIN parallel vote
 
 ### Cursor
 
@@ -137,6 +145,7 @@ cp /tmp/chorus/for-cursor/council/RULE.mdc .cursor/rules/chorus-council.mdc
 cp /tmp/chorus/for-cursor/parallel-review/RULE.mdc .cursor/rules/chorus-parallel-review.mdc
 cp /tmp/chorus/for-cursor/parallel-debug/RULE.mdc .cursor/rules/chorus-parallel-debug.mdc
 cp /tmp/chorus/for-cursor/second-opinion/RULE.mdc .cursor/rules/chorus-second-opinion.mdc
+cp /tmp/chorus/for-cursor/vote/RULE.mdc .cursor/rules/chorus-vote.mdc
 ```
 
 Adds rules (activate via natural language in Cursor):
@@ -149,6 +158,7 @@ Adds rules (activate via natural language in Cursor):
 - `chorus-parallel-review` - Parallel code review
 - `chorus-parallel-debug` - Parallel root-cause hypotheses
 - `chorus-second-opinion` - Quick independent second opinion
+- `chorus-vote` - YES/NO/ABSTAIN parallel vote
 
 ### Kilo
 
@@ -166,11 +176,13 @@ cp /tmp/chorus/for-kilo/cursor/SKILL.md ~/.kilo/skills/chorus-cursor/
 
 # Workflow pattern skills
 mkdir -p ~/.kilo/skills/chorus-council ~/.kilo/skills/chorus-parallel-review \
-         ~/.kilo/skills/chorus-parallel-debug ~/.kilo/skills/chorus-second-opinion
+         ~/.kilo/skills/chorus-parallel-debug ~/.kilo/skills/chorus-second-opinion \
+         ~/.kilo/skills/chorus-vote
 cp /tmp/chorus/for-kilo/council/SKILL.md ~/.kilo/skills/chorus-council/
 cp /tmp/chorus/for-kilo/parallel-review/SKILL.md ~/.kilo/skills/chorus-parallel-review/
 cp /tmp/chorus/for-kilo/parallel-debug/SKILL.md ~/.kilo/skills/chorus-parallel-debug/
 cp /tmp/chorus/for-kilo/second-opinion/SKILL.md ~/.kilo/skills/chorus-second-opinion/
+cp /tmp/chorus/for-kilo/vote/SKILL.md ~/.kilo/skills/chorus-vote/
 ```
 
 Adds skills:
@@ -183,6 +195,7 @@ Adds skills:
 - `chorus-parallel-review` - Parallel code review
 - `chorus-parallel-debug` - Parallel root-cause hypotheses
 - `chorus-second-opinion` - Quick independent second opinion
+- `chorus-vote` - YES/NO/ABSTAIN parallel vote
 
 ## Usage Examples
 
@@ -253,7 +266,7 @@ kilo run --auto "Run a council on whether to use Redis or Postgres for this queu
 
 ## Workflow Patterns
 
-Chorus ships four workflow pattern commands. The multi-agent workflows (`/chorus:council`, `/chorus:review`, `/chorus:debug`) orchestrate **multiple agents in parallel** and synthesize the results; `/chorus:second-opinion` runs with a single agent and falls back automatically if the requested agent is unavailable. Install the `chorus` plugin once to access all four.
+Chorus ships five workflow pattern commands. The multi-agent workflows (`/chorus:council`, `/chorus:review`, `/chorus:debug`, `/chorus:vote`) orchestrate **multiple agents in parallel**; `/chorus:second-opinion` runs with a single agent and falls back automatically if the requested agent is unavailable. Install the `chorus` plugin once to access all five.
 
 **Graceful degradation:** All workflows check agent availability at runtime. Missing agents are reported in the output with install instructions. For `council`, `review`, and `debug`, the command proceeds with the available subset — a minimum of 2 agents is required. `/chorus:second-opinion` requires only 1 available agent.
 
@@ -295,6 +308,18 @@ Quick independent check from one agent. Default: Gemini. Override with `--agent`
 /chorus:second-opinion --agent kilo "Is this function name clear enough for future maintainers?"
 ```
 
+### Parallel Vote
+
+YES / NO / ABSTAIN poll from all five agents. Use when you want a decision signal rather than discussion.
+
+```bash
+/chorus:vote "Adopt TypeScript for new files in this repo?"
+/chorus:vote "Add Redis as a dependency for session caching?"
+/chorus:vote --json "Use optimistic locking for this resource?"
+```
+
+The output is a tally table plus one-sentence rationale per agent. Use `/chorus:council` when you want reasoning and trade-offs; use `/chorus:vote` when you want a thumbs-up/thumbs-down count.
+
 ### Using chorus in Claude Code Plan mode
 
 Claude Code's Plan mode is a good entry point for chorus workflows. When you enter Plan mode before a complex feature, call `/chorus:council` to get multi-agent input before committing to an approach, or `/chorus:second-opinion` for a quick sanity check on a specific decision.
@@ -307,7 +332,7 @@ Claude Code's Plan mode is a good entry point for chorus workflows. When you ent
 /chorus:second-opinion --agent codex "Is a factory function better than a class here?"
 ```
 
-The council output feeds directly into your plan: consensus points become confirmed requirements, disagreements surface trade-offs worth deciding before implementation starts.
+The council output feeds directly into your plan: consensus points become confirmed requirements, disagreements surface trade-offs worth deciding before implementation starts. Use `/chorus:vote` for quick yes/no decisions ("should we add Redis?", "adopt TypeScript?") where a tally is more useful than a discussion.
 
 ---
 
@@ -318,9 +343,11 @@ All `run` and `review` commands support two execution modes:
 - `--wait` (or no flag with user confirmation) - Run in foreground and return results immediately
 - `--background` - Run as a background task and notify when complete
 
-The four chorus workflow commands (`council`, `review`, `debug`, `second-opinion`) also support:
+The five chorus workflow commands (`council`, `review`, `debug`, `second-opinion`, `vote`) also support:
 
-- `--json` - Emit structured JSON on stdout instead of delimited text: `{"command":"<cmd>","results":[{"name":"...","output":"...","error":"...","exitCode":0}]}`. Warnings about unavailable agents still go to stderr. Useful for scripting or programmatic consumption of agent output.
+- `--json` - Emit structured JSON on stdout instead of delimited text. Warnings about unavailable agents still go to stderr. Useful for scripting or programmatic consumption of agent output.
+  - `council` / `review` / `debug` / `second-opinion`: `{"command":"<cmd>","results":[{"name":"...","output":"...","error":"...","exitCode":0}]}`
+  - `vote`: `{"command":"vote","tally":{"yes":N,"no":N,"abstain":N,"invalid":N},"results":[{"name":"...","vote":"YES|NO|ABSTAIN|INVALID","rationale":"...","output":"...","error":"...","exitCode":0}]}`
 
 ## Requirements
 
@@ -347,7 +374,7 @@ chorus/
 │   ├── codex/                 # Codex plugin
 │   ├── cursor/                # Cursor Agent CLI plugin
 │   ├── kilo/                  # Kilo Code CLI plugin
-│   └── chorus/                # Workflow patterns (council, review, debug, second-opinion)
+│   └── chorus/                # Workflow patterns (council, review, debug, second-opinion, vote)
 ├── for-gemini/                # Gemini CLI skills
 │   ├── claude/SKILL.md
 │   ├── opencode/SKILL.md
@@ -357,7 +384,8 @@ chorus/
 │   ├── council/SKILL.md
 │   ├── parallel-review/SKILL.md
 │   ├── parallel-debug/SKILL.md
-│   └── second-opinion/SKILL.md
+│   ├── second-opinion/SKILL.md
+│   └── vote/SKILL.md
 ├── for-codex/                 # Codex skills
 │   ├── claude/SKILL.md
 │   ├── opencode/SKILL.md
@@ -367,7 +395,8 @@ chorus/
 │   ├── council/SKILL.md
 │   ├── parallel-review/SKILL.md
 │   ├── parallel-debug/SKILL.md
-│   └── second-opinion/SKILL.md
+│   ├── second-opinion/SKILL.md
+│   └── vote/SKILL.md
 ├── for-cursor/                # Cursor Agent CLI rules
 │   ├── claude/RULE.mdc
 │   ├── opencode/RULE.mdc
@@ -377,7 +406,8 @@ chorus/
 │   ├── council/RULE.mdc
 │   ├── parallel-review/RULE.mdc
 │   ├── parallel-debug/RULE.mdc
-│   └── second-opinion/RULE.mdc
+│   ├── second-opinion/RULE.mdc
+│   └── vote/RULE.mdc
 ├── for-kilo/                  # Kilo Code CLI skills
 │   ├── claude/SKILL.md
 │   ├── opencode/SKILL.md
@@ -387,7 +417,8 @@ chorus/
 │   ├── council/SKILL.md
 │   ├── parallel-review/SKILL.md
 │   ├── parallel-debug/SKILL.md
-│   └── second-opinion/SKILL.md
+│   ├── second-opinion/SKILL.md
+│   └── vote/SKILL.md
 ├── for-opencode/              # OpenCode MCP package
 │   ├── package.json
 │   └── src/

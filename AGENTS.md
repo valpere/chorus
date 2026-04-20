@@ -22,7 +22,7 @@ chorus/
 │   ├── cursor/
 │   ├── kilo/
 │   └── chorus/                     # Workflow patterns (orchestrate multiple agents)
-│       ├── commands/               # council.md, review.md, debug.md, second-opinion.md
+│       ├── commands/               # council.md, review.md, debug.md, second-opinion.md, vote.md
 │       └── scripts/companion.mjs   # Parallel orchestrator: spawns agents, captures output
 ├── for-gemini/                     # Gemini CLI skills (SKILL.md per target)
 ├── for-codex/                      # Codex skills (SKILL.md per target)
@@ -32,15 +32,16 @@ chorus/
     └── src/index.js                # MCP stdio server exposing delegate_* tools
 ```
 
-Each `for-*/` directory has 9 entries: 5 delegation targets + council + parallel-review + parallel-debug + second-opinion.
+Each `for-*/` directory has 10 entries: 5 delegation targets + council + parallel-review + parallel-debug + second-opinion + vote.
 
 ## Key files
 
 | File | Purpose |
 |------|---------|
-| `plugins/chorus/scripts/companion.mjs` | Core orchestrator. Runs `council`, `review`, `debug`, `second-opinion` subcommands. Checks agent availability, warns about missing agents. `council`/`review`/`debug` require ≥2 agents; `second-opinion` requires ≥1. |
+| `plugins/chorus/scripts/companion.mjs` | Core orchestrator. Runs `council`, `review`, `debug`, `second-opinion`, `vote` subcommands. Exports helpers for tests. `council`/`review`/`debug`/`vote` require ≥2 agents; `second-opinion` requires ≥1. |
+| `plugins/chorus/scripts/tests/` | `node --test` smoke tests for companion.mjs helpers and subcommands. Run with `npm test`. |
 | `plugins/chorus/commands/*.md` | Claude Code slash-command specs for each workflow pattern. |
-| `for-opencode/src/index.js` | MCP server. Exports `delegate_*` tools and `council`, `parallel_review`, `parallel_debug`, `second_opinion`. |
+| `for-opencode/src/index.js` | MCP server. Exports `delegate_*` tools, `check_agents`, `council` (strict mode), `parallel_review`, `parallel_debug`, `second_opinion` (with fallback), `vote`. |
 | `.claude-plugin/marketplace.json` | Claude Code plugin registry. |
 
 ## Agent registry (companion.mjs)
@@ -77,8 +78,14 @@ const REGISTRY = {
 - `--dangerously-skip-permissions` for Claude: intentional — delegated sandboxed context
 - `--yolo` for Gemini: auto-approves tool calls for non-interactive use
 
+## Running tests
+
+```bash
+npm test   # runs plugins/chorus/scripts/tests/*.test.mjs (no live CLIs needed)
+```
+
 ## Known limitations
 
 - **Codex sandbox**: file access limited to working directory — cross-project delegation yields partial results
 - **OpenCode TUI**: stdout not capturable — excluded from parallel workflow patterns
-- **Workflow patterns require ≥2 agents**: `council`, `review`, `debug` exit non-zero if fewer than 2 agents are installed
+- **Workflow patterns require ≥2 agents**: `council`, `review`, `debug`, `vote` exit non-zero if fewer than 2 agents are installed
