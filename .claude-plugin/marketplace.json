@@ -54,6 +54,13 @@
       "version": "1.0.0",
       "author": { "name": "valpere" },
       "source": "./plugins/chorus"
+    },
+    {
+      "name": "job-hunter",
+      "description": "Automated vacancy scanning, scoring, cover letter generation, and hybrid auto-apply for Djinni, Work.ua, Robota.ua, DOU.ua.",
+      "version": "1.0.0",
+      "author": { "name": "valpere" },
+      "source": "./plugins/job-hunter"
     }
   ]
 }

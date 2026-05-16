@@ -1,0 +1,11 @@
+{
+  "name": "@chorus/job-hunter",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=18.18.0" },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "js-yaml": "^4.1.0"
+  }
+}

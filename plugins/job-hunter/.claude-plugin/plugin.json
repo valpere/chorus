@@ -1,0 +1,6 @@
+{
+  "name": "job-hunter",
+  "version": "1.0.0",
+  "description": "Automated vacancy scanning, scoring, cover letter generation, and hybrid auto-apply for Djinni, Work.ua, Robota.ua, DOU.ua.",
+  "author": { "name": "valpere" }
+}
