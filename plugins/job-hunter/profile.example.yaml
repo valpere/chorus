@@ -1,0 +1,64 @@
+# job-hunter profile — copy to ~/.config/job-hunter/profile.yaml
+# or run /job-hunter:setup to generate this interactively
+
+name: Your Name
+title: Senior Software Engineer         # used for seniority scoring ("senior"/"lead"/"cto" keywords)
+skills:
+  - Go
+  - TypeScript
+  - Docker
+  - Kubernetes
+  - PostgreSQL
+  # add more — matched against vacancy tech stack tags
+
+salary_min: 5000                        # minimum acceptable salary
+currency: USD                           # USD | EUR | UAH
+
+location: remote                        # remote | hybrid | onsite | any
+
+email: you@example.com
+cv_path: ~/path/to/Resume.pdf           # set to null to skip CV upload
+
+# Queries are platform-specific: use English on Djinni, Ukrainian on Work.ua/Robota.ua
+platforms:
+  djinni:
+    enabled: true
+    queries:
+      - golang backend
+      - go developer
+      - senior backend engineer
+  work_ua:
+    enabled: true
+    queries:
+      - golang розробник
+      - senior backend
+  robota_ua:
+    enabled: true
+    queries:
+      - golang
+      - java senior
+  dou_ua:
+    enabled: false                      # set true to enable
+    queries:
+      - golang
+
+thresholds:
+  auto: 85                              # score >= auto → apply without asking; raise to be more selective
+  confirm: 60                           # score >= confirm → ask Y/N before applying; below → skip silently
+
+# Template placeholders: {title} {company} {custom_paragraph} {profile_summary} {name}
+cover_letter_template: |
+  Hi,
+
+  I'm applying for the {title} position at {company}.
+
+  {custom_paragraph}
+
+  My background: {profile_summary}
+
+  Full profile: https://valpere.github.io
+
+  Best regards,
+  {name}
+
+tracking_file: ~/.config/job-hunter/applications.xlsx
