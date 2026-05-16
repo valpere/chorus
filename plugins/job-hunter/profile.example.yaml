@@ -2,7 +2,7 @@
 # or run /job-hunter:setup to generate this interactively
 
 name: Your Name
-title: Senior Software Engineer         # used for seniority scoring
+title: Senior Software Engineer         # used for seniority scoring ("senior"/"lead"/"cto" keywords)
 skills:
   - Go
   - TypeScript
@@ -19,6 +19,7 @@ location: remote                        # remote | hybrid | onsite | any
 email: you@example.com
 cv_path: ~/path/to/Resume.pdf           # set to null to skip CV upload
 
+# Queries are platform-specific: use English on Djinni, Ukrainian on Work.ua/Robota.ua
 platforms:
   djinni:
     enabled: true
@@ -42,10 +43,10 @@ platforms:
       - golang
 
 thresholds:
-  auto: 85                              # score >= auto → apply without asking
-  confirm: 60                           # score >= confirm → ask Y/N; below → skip
+  auto: 85                              # score >= auto → apply without asking; raise to be more selective
+  confirm: 60                           # score >= confirm → ask Y/N before applying; below → skip silently
 
-# Placeholders: {title} {company} {custom_paragraph} {profile_summary} {name}
+# Template placeholders: {title} {company} {custom_paragraph} {profile_summary} {name}
 cover_letter_template: |
   Hi,
 

@@ -110,8 +110,14 @@ May show CAPTCHA on some flows. If the browser gets blocked, re-run `/job-hunter
 
 **"Profile not found"** — run `/job-hunter:setup`.
 
-**"Session expired" / redirected to login** — re-run `/job-hunter:setup` to re-authenticate each platform.
+**"Session expired" / redirected to login** — re-run `/job-hunter:setup` to re-authenticate. Browser sessions (cookies) expire after ~30 days. Each platform needs its own session refresh.
 
-**Score always low** — check `profile.skills` matches the tech keywords platforms use (e.g. "Golang" vs "Go (Programming Language)").
+**Score always low** — check `profile.skills` matches the exact tech keywords platforms use (e.g. "Golang" not "Go (Programming Language)", "PostgreSQL" not "Postgres"). Add abbreviations and aliases to `skills`.
 
-**CV upload field not found** — skipped automatically; cover letter is still submitted.
+**CV upload field not found** — skipped automatically; cover letter and email are still submitted. To fix: check that `cv_path` points to an existing PDF.
+
+**All vacancies scoring below 60 (all skipped)** — lower `thresholds.confirm` to 50, run with `--dry-run` first to see scores, then adjust `profile.skills` to match what platforms actually list.
+
+**Playwright browser not opening / MCP not available** — verify the Playwright MCP server is installed and running. In Claude Code, run `/mcp` to check connected servers.
+
+**DOU.ua CAPTCHA** — navigate the CAPTCHA manually in the open browser tab, then confirm to Claude that you're through. If CAPTCHA appears repeatedly, wait 15 minutes before the next scan.
