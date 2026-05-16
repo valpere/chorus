@@ -45,5 +45,5 @@ Then print counts per status value:
 
 ```
 applied: N  confirmed: N  skipped: N  pending: N
-Total: N applications shown (last N of M total)
+Total: N applications shown
 ```

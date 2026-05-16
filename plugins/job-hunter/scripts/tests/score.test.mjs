@@ -21,114 +21,114 @@ currency: USD
 location: remote
 `;
 
-let dir, profilePath;
-
-test('setup temp profile', () => {
-  dir = mkdtempSync(join(tmpdir(), 'jh-score-'));
-  profilePath = join(dir, 'profile.yaml');
+function withProfile(fn) {
+  const dir = mkdtempSync(join(tmpdir(), 'jh-score-'));
+  const profilePath = join(dir, 'profile.yaml');
   writeFileSync(profilePath, PROFILE_YAML, 'utf8');
-  assert.ok(true);
-});
+  try {
+    fn(profilePath);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function score(profilePath, vacancy) {
+  return spawnSync(process.execPath,
+    [SCRIPT, '--profile', profilePath, '--vacancy', JSON.stringify(vacancy)],
+    { encoding: 'utf8' });
+}
 
 test('perfect match scores above 80', () => {
-  const vacancy = JSON.stringify({
-    title: 'Senior Go Developer',
-    company: 'Acme Corp',
-    stack: ['Go', 'Docker', 'Kubernetes', 'PostgreSQL'],
-    salary_min: 5000,
-    salary_max: 8000,
-    remote: true,
-    description: 'Senior backend engineer needed',
+  withProfile(profilePath => {
+    const r = score(profilePath, {
+      title: 'Senior Go Developer',
+      company: 'Acme Corp',
+      stack: ['Go', 'Docker', 'Kubernetes', 'PostgreSQL'],
+      salary_min: 5000,
+      salary_max: 8000,
+      remote: true,
+      description: 'Senior backend engineer needed',
+    });
+    assert.equal(r.status, 0, r.stderr);
+    const { score: s, breakdown } = JSON.parse(r.stdout);
+    assert.ok(s > 80, `expected >80, got ${s}`);
+    assert.ok(breakdown.skills > 0);
+    assert.equal(breakdown.salary, 20);
+    assert.equal(breakdown.location, 20);
   });
-  const r = spawnSync(process.execPath,
-    [SCRIPT, '--profile', profilePath, '--vacancy', vacancy],
-    { encoding: 'utf8' });
-  assert.equal(r.status, 0, r.stderr);
-  const { score, breakdown } = JSON.parse(r.stdout);
-  assert.ok(score > 80, `expected >80, got ${score}`);
-  assert.ok(breakdown.skills > 0);
-  assert.equal(breakdown.salary, 20);
-  assert.equal(breakdown.location, 20);
 });
 
 test('junior vacancy scores 0 on seniority', () => {
-  const vacancy = JSON.stringify({
-    title: 'Junior Go Developer',
-    company: 'Corp',
-    stack: ['Go'],
-    salary_min: 5000,
-    salary_max: 8000,
-    remote: true,
-    description: 'Junior developer role, 0-1 years',
+  withProfile(profilePath => {
+    const r = score(profilePath, {
+      title: 'Junior Go Developer',
+      company: 'Corp',
+      stack: ['Go'],
+      salary_min: 5000,
+      salary_max: 8000,
+      remote: true,
+      description: 'Junior developer role, 0-1 years',
+    });
+    assert.equal(r.status, 0, r.stderr);
+    const { breakdown } = JSON.parse(r.stdout);
+    assert.equal(breakdown.seniority, 0);
   });
-  const r = spawnSync(process.execPath,
-    [SCRIPT, '--profile', profilePath, '--vacancy', vacancy],
-    { encoding: 'utf8' });
-  assert.equal(r.status, 0, r.stderr);
-  const { breakdown } = JSON.parse(r.stdout);
-  assert.equal(breakdown.seniority, 0);
 });
 
 test('location mismatch scores 0 on location', () => {
-  const vacancy = JSON.stringify({
-    title: 'Senior Engineer',
-    company: 'Corp',
-    stack: ['Go'],
-    salary_min: 6000,
-    remote: false,
-    hybrid: false,
-    description: 'Onsite Kyiv only',
+  withProfile(profilePath => {
+    const r = score(profilePath, {
+      title: 'Senior Engineer',
+      company: 'Corp',
+      stack: ['Go'],
+      salary_min: 6000,
+      remote: false,
+      hybrid: false,
+      description: 'Onsite Kyiv only',
+    });
+    assert.equal(r.status, 0, r.stderr);
+    const { breakdown } = JSON.parse(r.stdout);
+    assert.equal(breakdown.location, 0);
   });
-  const r = spawnSync(process.execPath,
-    [SCRIPT, '--profile', profilePath, '--vacancy', vacancy],
-    { encoding: 'utf8' });
-  assert.equal(r.status, 0, r.stderr);
-  const { breakdown } = JSON.parse(r.stdout);
-  assert.equal(breakdown.location, 0);
 });
 
 test('no salary stated gives partial salary credit', () => {
-  const vacancy = JSON.stringify({
-    title: 'Senior Engineer',
-    company: 'Corp',
-    stack: ['Go'],
-    remote: true,
-    description: 'Senior role',
+  withProfile(profilePath => {
+    const r = score(profilePath, {
+      title: 'Senior Engineer',
+      company: 'Corp',
+      stack: ['Go'],
+      remote: true,
+      description: 'Senior role',
+    });
+    assert.equal(r.status, 0, r.stderr);
+    const { breakdown } = JSON.parse(r.stdout);
+    assert.equal(breakdown.salary, 10);
   });
-  const r = spawnSync(process.execPath,
-    [SCRIPT, '--profile', profilePath, '--vacancy', vacancy],
-    { encoding: 'utf8' });
-  assert.equal(r.status, 0, r.stderr);
-  const { breakdown } = JSON.parse(r.stdout);
-  assert.equal(breakdown.salary, 10);
 });
 
 test('score is sum of all breakdown values', () => {
-  const vacancy = JSON.stringify({
-    title: 'Engineer',
-    company: 'Acme',
-    stack: ['Go', 'TypeScript'],
-    salary_min: 4000,
-    salary_max: 6000,
-    remote: true,
-    description: 'Senior engineer',
+  withProfile(profilePath => {
+    const r = score(profilePath, {
+      title: 'Engineer',
+      company: 'Acme',
+      stack: ['Go', 'TypeScript'],
+      salary_min: 4000,
+      salary_max: 6000,
+      remote: true,
+      description: 'Senior engineer',
+    });
+    const { score: s, breakdown } = JSON.parse(r.stdout);
+    const expected = Object.values(breakdown).reduce((a, b) => a + b, 0);
+    assert.equal(s, expected);
   });
-  const r = spawnSync(process.execPath,
-    [SCRIPT, '--profile', profilePath, '--vacancy', vacancy],
-    { encoding: 'utf8' });
-  const { score, breakdown } = JSON.parse(r.stdout);
-  const expected = Object.values(breakdown).reduce((a, b) => a + b, 0);
-  assert.equal(score, expected);
 });
 
 test('exits 1 with no --vacancy arg', () => {
-  const r = spawnSync(process.execPath,
-    [SCRIPT, '--profile', profilePath],
-    { encoding: 'utf8' });
-  assert.equal(r.status, 1);
-});
-
-test('cleanup', () => {
-  rmSync(dir, { recursive: true, force: true });
-  assert.ok(true);
+  withProfile(profilePath => {
+    const r = spawnSync(process.execPath,
+      [SCRIPT, '--profile', profilePath],
+      { encoding: 'utf8' });
+    assert.equal(r.status, 1);
+  });
 });

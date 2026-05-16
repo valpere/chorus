@@ -114,6 +114,7 @@ For each **enabled** platform:
    Parse the cookie string into an array of `{ name, value, domain }` objects (split by `"; "`, then split each by `"="`).
 5. Save session:
    ```bash
+   # Session is saved alongside the profile at ~/.config/job-hunter/session-<platform>.json
    echo '<cookies-json>' | node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" save-session <platform>
    ```
 
