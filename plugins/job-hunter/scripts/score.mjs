@@ -62,8 +62,8 @@ function parseNamedArgs(argv) {
 
 const args = parseNamedArgs(process.argv);
 
-if (!args.vacancy) {
-  process.stderr.write("Usage: score.mjs --profile <path> --vacancy '<json>'\n");
+if (!args.vacancy && !args['vacancy-file']) {
+  process.stderr.write("Usage: score.mjs --profile <path> --vacancy '<json>' | --vacancy-file <path>\n");
   process.exit(1);
 }
 
@@ -72,7 +72,10 @@ const profilePath = args.profile
   : join(homedir(), '.config', 'job-hunter', 'profile.yaml');
 
 const profile = yaml.load(readFileSync(profilePath, 'utf8'));
-const vacancy = JSON.parse(args.vacancy);
+const vacancyJson = args['vacancy-file']
+  ? readFileSync(args['vacancy-file'], 'utf8')
+  : args.vacancy;
+const vacancy = JSON.parse(vacancyJson);
 
 const breakdown = {
   skills:    skillOverlap(profile.skills, vacancy.stack),

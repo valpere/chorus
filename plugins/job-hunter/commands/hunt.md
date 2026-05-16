@@ -26,7 +26,13 @@ Parse flags from `$ARGUMENTS`:
    ```
    Parse the JSON output as `profile`.
 
-3. Determine active platforms: if `--platform` was specified, use only that platform (verify it is enabled in profile). Otherwise use all platforms where `enabled: true`.
+3. Verify Playwright MCP is available by taking a browser snapshot:
+   ```
+   browser_snapshot
+   ```
+   If this fails (tool not available), stop and tell the user: "Playwright MCP is required. Install it via `claude mcp add playwright` and restart."
+
+4. Determine active platforms: if `--platform` was specified, use only that platform (verify it is enabled in profile). Otherwise use all platforms where `enabled: true`.
 
 ## Scan each platform
 
@@ -37,11 +43,15 @@ Process platforms sequentially to avoid browser conflicts. For each active platf
 For each query in `profile.platforms.djinni.queries`:
 
 1. Load session: `node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" load-session djinni`
-   If not null, inject cookies into browser via `browser_evaluate`:
+   If not null, inject non-HttpOnly cookies via `browser_evaluate` (note: HttpOnly cookies
+   cannot be set via JavaScript and are silently ignored):
    ```javascript
    // for each cookie { name, value, domain }
    document.cookie = `${name}=${value}; path=/`;
    ```
+   After injecting, navigate to `https://djinni.co` and check for a logged-in indicator
+   (e.g. user avatar or account menu). If not logged in, warn the user that the saved
+   session has expired and they should re-run `/job-hunter:setup` to refresh it.
 
 2. Navigate to search URL:
    `https://djinni.co/jobs/?primary_keyword=<url-encoded-query>&employment=remote`
@@ -58,6 +68,8 @@ For each query in `profile.platforms.djinni.queries`:
 For each query in `profile.platforms.work_ua.queries`:
 
 1. Load session: `node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" load-session work_ua`
+   Inject non-HttpOnly cookies (same pattern as Djinni). Verify logged-in state on
+   `https://www.work.ua` before searching; warn on session expiry.
 
 2. Navigate to: `https://www.work.ua/jobs/?q=<url-encoded-query>&employment=74`
 
@@ -70,6 +82,8 @@ For each query in `profile.platforms.work_ua.queries`:
 For each query in `profile.platforms.robota_ua.queries`:
 
 1. Load session: `node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" load-session robota_ua`
+   Inject non-HttpOnly cookies (same pattern as Djinni). Verify logged-in state on
+   `https://robota.ua` before searching; warn on session expiry.
 
 2. Navigate to: `https://robota.ua/jobs/<url-encoded-query>?employmentTypeName=remote`
 
@@ -82,6 +96,8 @@ For each query in `profile.platforms.robota_ua.queries`:
 For each query in `profile.platforms.dou_ua.queries`:
 
 1. Load session: `node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" load-session dou_ua`
+   Inject non-HttpOnly cookies (same pattern as Djinni). Verify logged-in state on
+   `https://jobs.dou.ua` before searching; warn on session expiry.
 
 2. Navigate to: `https://jobs.dou.ua/vacancies/?search=<url-encoded-query>&remote`
 
@@ -94,9 +110,16 @@ For each query in `profile.platforms.dou_ua.queries`:
 For each collected vacancy:
 
 ```bash
+# Write vacancy JSON to a temp file to avoid shell quoting issues with
+# apostrophes or special characters in vacancy titles/descriptions.
+_VACANCY_TMP=$(mktemp)
+cat > "$_VACANCY_TMP" << 'VACANCY_EOF'
+<vacancy-json-single-line>
+VACANCY_EOF
 node "$CLAUDE_PLUGIN_ROOT/scripts/score.mjs" \
   --profile ~/.config/job-hunter/profile.yaml \
-  --vacancy '<vacancy-json-single-line>'
+  --vacancy-file "$_VACANCY_TMP"
+rm -f "$_VACANCY_TMP"
 ```
 
 Parse `{ score, breakdown }` from stdout. Attach to vacancy object.

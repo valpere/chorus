@@ -91,7 +91,10 @@ Construct a JSON object matching this shape (set `enabled: true` only for platfo
 ## Save profile
 
 ```bash
-echo '<profile-json>' | node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" save
+# Use a heredoc to avoid shell quoting issues with apostrophes in user input.
+node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" save << 'PROFILE_EOF'
+<profile-json>
+PROFILE_EOF
 ```
 
 If this exits non-zero, stop and report the error.
@@ -115,7 +118,9 @@ For each **enabled** platform:
 5. Save session:
    ```bash
    # Session is saved alongside the profile at ~/.config/job-hunter/session-<platform>.json
-   echo '<cookies-json>' | node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" save-session <platform>
+   node "$CLAUDE_PLUGIN_ROOT/scripts/profile.mjs" save-session <platform> << 'COOKIES_EOF'
+   <cookies-json>
+   COOKIES_EOF
    ```
 
 ## Confirm
