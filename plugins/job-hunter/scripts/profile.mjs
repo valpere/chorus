@@ -29,7 +29,7 @@ switch (command) {
   }
   case 'save': {
     const path = resolvePath(args[0]);
-    const data = JSON.parse(readFileSync('/dev/stdin', 'utf8'));
+    const data = JSON.parse(readFileSync(0, 'utf8'));
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, yaml.dump(data, { lineWidth: 120 }), 'utf8');
     process.stdout.write(`Profile saved to ${path}\n`);
@@ -41,7 +41,7 @@ switch (command) {
   case 'save-session': {
     const [platform, profileArg] = args;
     const spath = sessionPath(platform, profileArg);
-    const cookies = JSON.parse(readFileSync('/dev/stdin', 'utf8'));
+    const cookies = JSON.parse(readFileSync(0, 'utf8'));
     mkdirSync(dirname(spath), { recursive: true });
     writeFileSync(spath, JSON.stringify(cookies, null, 2), 'utf8');
     process.stdout.write(`Session saved to ${spath}\n`);

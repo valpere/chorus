@@ -50,6 +50,9 @@ async function appendRows(file, rows) {
       type: 'pattern', pattern: 'solid',
       fgColor: { argb: 'FFD9EAD3' },
     };
+  } else {
+    // Restore column keys lost when reading from file; required for addRow({key: val}) to work
+    COLUMNS.forEach((col, i) => { ws.getColumn(i + 1).key = col.key; });
   }
 
   for (const row of rows) ws.addRow(row);
@@ -91,7 +94,7 @@ const args = parseNamedArgs(process.argv);
 const file = resolveFile(args.file);
 
 if (command === 'append') {
-  const rowsJson = args.rows ?? readFileSync('/dev/stdin', 'utf8');
+  const rowsJson = args.rows ?? readFileSync(0, 'utf8');
   await appendRows(file, JSON.parse(rowsJson));
 } else if (command === 'read') {
   await readRows(file, args.last ? parseInt(args.last, 10) : undefined);
